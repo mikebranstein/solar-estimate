@@ -1,45 +1,70 @@
 import React from 'react';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
-const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || '';
+// Fix for default marker icon issue with Leaflet in React
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+});
 
-const mapContainerStyle = {
-  width: '100%',
-  height: '100%'
-};
-
-const defaultCenter = {
-  lat: 37.7749,
-  lng: -122.4194
-};
+const defaultCenter = [37.7749, -122.4194]; // San Francisco
 
 function MapView({ location, roofData }) {
-  const center = location ? { lat: location.lat, lng: location.lng } : defaultCenter;
+  const center = location ? [location.lat, location.lng] : defaultCenter;
+  const zoom = location ? 19 : 12;
 
   return (
-    <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
-      <GoogleMap
-        mapContainerStyle={mapContainerStyle}
+    <div style={{ width: '100%', height: '100%' }}>
+      <MapContainer
         center={center}
-        zoom={location ? 20 : 12}
-        mapTypeId="satellite"
-        options={{
-          tilt: 0,
-          mapTypeControl: true,
-          streetViewControl: false,
-          fullscreenControl: true
-        }}
+        zoom={zoom}
+        style={{ width: '100%', height: '100%' }}
+        key={`${center[0]}-${center[1]}`} // Force re-render when location changes
       >
-        {location && (
-          <Marker
-            position={center}
-            title="Your Location"
-          />
-        )}
+        {/* Satellite Imagery Tile Layer */}
+        <TileLayer
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
+          maxZoom={19}
+        />
+        
+        {/* Street Labels Overlay */}
+        <TileLayer
+          url="https://{s}.basemaps.cartocdn.com/only_labels/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+          maxZoom={19}
+        />
 
-        {/* TODO: Render roof segments as polygons */}
-      </GoogleMap>
-    </LoadScript>
+        {location && (
+          <Marker position={center}>
+            <Popup>
+              {roofData?.formattedAddress || 'Your Location'}
+            </Popup>
+          </Marker>
+        )}
+      </MapContainer>
+
+      {location && (
+        <div style={{
+          position: 'absolute',
+          top: '10px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'white',
+          padding: '8px 16px',
+          borderRadius: '4px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+          zIndex: 1000,
+          fontSize: '0.9rem'
+        }}>
+          💡 View your roof from satellite imagery, then configure panels below
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-This guide will help you get the Solar Energy Estimator up and running in just a few minutes.
+This guide will help you get the Solar Energy Estimator up and running in just a few minutes. **No credit card required!**
 
 ## Prerequisites Check
 
@@ -13,30 +13,18 @@ Before starting, make sure you have:
 
 ## Step-by-Step Setup
 
-### 1. Get Your API Keys
+### 1. Get Your NREL API Key (FREE - No Credit Card)
 
-You'll need API keys from two sources:
-
-#### Google Cloud Platform (Required for core functionality)
-
-1. Visit [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Click "Enable APIs and Services"
-4. Enable these APIs:
-   - **Maps JavaScript API** (required)
-   - **Geocoding API** (required)
-   - **Solar API** (optional, for automated roof detection)
-5. Go to **Credentials** → **Create Credentials** → **API Key**
-6. Copy your API key
-
-**Important:** For testing, you can leave the API key unrestricted. For production, restrict it to your domain.
+You only need ONE API key, and it's completely free:
 
 #### NREL Developer (Required for solar data)
 
 1. Visit [NREL Developer Signup](https://developer.nrel.gov/signup/)
-2. Fill out the simple form
+2. Fill out the simple form (no credit card needed)
 3. Check your email - your API key arrives instantly
 4. Copy your API key
+
+**That's it!** No other API keys needed.
 
 ### 2. Install Dependencies
 
@@ -61,12 +49,10 @@ cd backend
 copy .env.example .env
 ```
 
-Open `backend/.env` in your text editor and add your API keys:
+Open `backend/.env` in your text editor and add your NREL API key:
 
 ```env
 PORT=5000
-GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_KEY_HERE
-GOOGLE_SOLAR_API_KEY=YOUR_GOOGLE_KEY_HERE
 NREL_API_KEY=YOUR_NREL_KEY_HERE
 ```
 
@@ -77,12 +63,13 @@ cd ../frontend
 copy .env.example .env
 ```
 
-Open `frontend/.env` and add your Google Maps key:
+The frontend `.env` should contain:
 
 ```env
-REACT_APP_GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_KEY_HERE
 REACT_APP_API_URL=http://localhost:5000/api
 ```
+
+That's all! No other configuration needed.
 
 ### 4. Start the Application
 
@@ -109,7 +96,7 @@ Open your browser and navigate to:
 http://localhost:3000
 ```
 
-You should see the Solar Energy Estimator interface!
+You should see the Solar Energy Estimator interface with a map!
 
 ## First Use
 
@@ -121,25 +108,29 @@ You should see the Solar Energy Estimator interface!
    ```
 
 2. **Click "Analyze Location"**
-   - The map will zoom to your location
-   - Roof surfaces will be detected (if available in your region)
+   - The map will zoom to your location with satellite imagery
+   - The address will be geocoded using OpenStreetMap
 
-3. **Configure panels**
-   - Enable one or more roof segments
-   - Enter the kWp capacity (try 5.0 for a typical residential setup)
+3. **Add roof surfaces**
+   - Click "Add Roof Surface"
+   - View the satellite imagery to identify your roof
+   - Configure each surface:
+     - **kWp**: Panel capacity (try 5.0 for typical residential)
+     - **Azimuth**: Direction (180° = South-facing, optimal)
+     - **Pitch**: Roof angle (typical = 20°)
 
 4. **Click "Calculate Energy Production"**
    - View interactive charts
    - See production estimates
    - Explore different time ranges
 
-### Example Addresses to Try
+### Example Configuration
 
-These locations have good Google Solar API coverage:
-
-- `1600 Amphitheatre Parkway, Mountain View, CA` (Google HQ)
-- `1 Apple Park Way, Cupertino, CA` (Apple Park)
-- `410 Terry Ave N, Seattle, WA` (Amazon)
+For a typical south-facing roof:
+- **kWp**: 5.0
+- **Azimuth**: 180° (south)
+- **Pitch**: 20°
+- **Area**: 30 m² (optional)
 
 ## Troubleshooting
 
@@ -152,16 +143,15 @@ npm run install:all
 
 ### Maps not loading
 
-1. Check that `REACT_APP_GOOGLE_MAPS_API_KEY` is set in `frontend/.env`
-2. Verify the API key is valid
-3. Make sure Maps JavaScript API is enabled in Google Cloud Console
-4. Check browser console for specific error messages
+1. Check internet connection (maps load from external tile servers)
+2. Clear browser cache
+3. Check browser console for specific error messages
 
-### "No roof data available"
+### Geocoding not working
 
-Google Solar API doesn't have coverage everywhere. This is normal! You can still:
-- Use the app by manually configuring panel orientations
-- Try a different address in a major US city
+1. Be specific with addresses (include city, state/province, country)
+2. Nominatim has a rate limit of 1 request per second
+3. Try a well-known address first to test
 
 ### Backend connection errors
 
@@ -180,22 +170,9 @@ Google Solar API doesn't have coverage everywhere. This is normal! You can still
 Now that you have the app running:
 
 1. **Explore the features** - Try different addresses and configurations
-2. **Read the full documentation** - Check out README.md for detailed info
+2. **Read the full documentation** - Check out [README.md](README.md) for detailed info
 3. **Customize it** - Modify the code to suit your needs
-4. **Add features** - See the "Future Enhancements" section in README.md
-
-## Getting Help
-
-If you run into issues:
-
-1. Check the **Troubleshooting** section above
-2. Review the **README.md** for detailed documentation
-3. Look at the **API_DOCS.md** for API details
-4. Open an issue on GitHub with:
-   - What you were trying to do
-   - What happened instead
-   - Any error messages
-   - Your Node.js version (`node --version`)
+4. **Add features** - See the "Future Enhancements" section in [README.md](README.md)
 
 ## Development Tips
 
@@ -227,6 +204,26 @@ Recommended extensions:
 - ESLint
 - Prettier
 - ES7+ React/Redux/React-Native snippets
+
+## What Makes This Different?
+
+✅ **No Credit Card Required** - Unlike Google Maps, this uses free OpenStreetMap  
+✅ **No API Limits** - NREL gives you 1000 requests/hour for free  
+✅ **Privacy Friendly** - No tracking, no accounts (except NREL API key)  
+✅ **Open Source** - Built with open-source mapping and free data  
+
+## Getting Help
+
+If you run into issues:
+
+1. Check the **Troubleshooting** section above
+2. Review the **[README.md](README.md)** for detailed documentation
+3. Look at the **[API_DOCS.md](API_DOCS.md)** for API details
+4. Open an issue on GitHub with:
+   - What you were trying to do
+   - What happened instead
+   - Any error messages
+   - Your Node.js version (`node --version`)
 
 ---
 

@@ -1,11 +1,11 @@
 # ☀️ Solar Energy Estimator
 
-A comprehensive web application that estimates solar panel energy generation using automated roof detection, Google Maps satellite imagery, and real solar irradiance data from NREL.
+A comprehensive web application that estimates solar panel energy generation using OpenStreetMap, Leaflet for interactive maps, and real solar irradiance data from NREL. **No credit card or Google API key required!**
 
 ## Features
 
-- 🏠 **Automated Roof Detection** - Uses Google Solar API to automatically detect roof surfaces, angles, and orientations
-- 🗺️ **Google Maps Integration** - Satellite view of your property with interactive roof surface selection
+- 🗺️ **Free Mapping** - Uses Leaflet with OpenStreetMap and satellite imagery (no API key needed)
+- 🏠 **Manual Roof Configuration** - Easy interface to configure multiple roof surfaces
 - 📊 **Energy Production Calculations** - Accurate solar energy estimates based on:
   - Panel orientation (azimuth)
   - Roof pitch/tilt angle
@@ -15,19 +15,19 @@ A comprehensive web application that estimates solar panel energy generation usi
   - Hourly, daily, weekly, monthly, and yearly views
   - Drill-down capability
   - 25-year lifetime projections with degradation modeling
-- 🔧 **Configurable Panel Setup** - Click on roof sections to configure kWp capacity for each surface
+- 🔧 **Configurable Panel Setup** - Add multiple roof surfaces with different orientations
+- 🆓 **Completely Free** - No credit card, no API limits (except NREL's generous free tier)
 
 ## Tech Stack
 
 ### Backend
 - **Node.js** with Express
-- **Google Maps API** for geocoding and location services
-- **Google Solar API** for automated roof detection
+- **Nominatim** (OpenStreetMap) for free geocoding
 - **NREL API** (National Renewable Energy Laboratory) for solar irradiance data
 
 ### Frontend
 - **React** 18
-- **@react-google-maps/api** for Maps integration
+- **Leaflet** & react-leaflet for maps
 - **Chart.js** & react-chartjs-2 for visualizations
 - **Axios** for API calls
 
@@ -36,11 +36,9 @@ A comprehensive web application that estimates solar panel energy generation usi
 Before you begin, ensure you have:
 
 - **Node.js** (v16 or higher) and npm installed
-- **Google Cloud Platform account** with:
-  - Maps JavaScript API enabled
-  - Solar API enabled (optional but recommended)
-  - API key generated
 - **NREL API key** (free, get from https://developer.nrel.gov/signup/)
+  - No credit card required
+  - 1,000 requests per hour free tier
 
 ## Installation
 
@@ -76,15 +74,11 @@ Before you begin, ensure you have:
    copy .env.example .env
    ```
 
-3. Edit `.env` and add your API keys:
+3. Edit `.env` and add your NREL API key:
    ```env
    PORT=5000
    
-   # Get from: https://console.cloud.google.com/
-   GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
-   GOOGLE_SOLAR_API_KEY=your_google_solar_api_key_here
-   
-   # Get from: https://developer.nrel.gov/signup/
+   # Get from: https://developer.nrel.gov/signup/ (FREE, no credit card)
    NREL_API_KEY=your_nrel_api_key_here
    ```
 
@@ -100,33 +94,22 @@ Before you begin, ensure you have:
    copy .env.example .env
    ```
 
-3. Edit `.env` and add your Google Maps API key:
+3. The frontend needs minimal configuration:
    ```env
-   REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
    REACT_APP_API_URL=http://localhost:5000/api
    ```
 
+That's it! No Google API key needed.
+
 ## Getting API Keys
 
-### Google Maps & Solar API
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing one
-3. Enable the following APIs:
-   - Maps JavaScript API
-   - Geocoding API
-   - Solar API (for automated roof detection)
-4. Go to "Credentials" and create an API key
-5. (Optional) Restrict the API key to your domain for production
-
-**Note:** Google Solar API may not be available in all regions. If unavailable, the app will fall back to manual roof configuration.
-
-### NREL API Key
+### NREL API Key (Required - FREE)
 
 1. Go to [NREL Developer Network](https://developer.nrel.gov/signup/)
-2. Sign up for a free account
+2. Sign up for a free account (no credit card required)
 3. Your API key will be emailed to you instantly
-4. Free tier includes 1,000 requests per hour
+4. Free tier includes **1,000 requests per hour**
+5. Add it to `backend/.env`
 
 ## Running the Application
 
@@ -185,16 +168,23 @@ npm start
 1. **Enter Your Address**
    - Type your full address in the search box
    - Click "Analyze Location"
+   - The map will show satellite imagery of your location
 
-2. **View Roof Detection**
-   - The app will automatically detect your roof surfaces
-   - View them on the satellite map
-   - Each roof segment shows its orientation and pitch
+2. **Add Roof Surfaces**
+   - Click "Add Roof Surface" to add each section of your roof
+   - View the satellite imagery to identify different roof orientations
+   - Add separate surfaces for each direction (e.g., south-facing, east-facing)
 
-3. **Configure Solar Panels**
-   - Enable roof segments you want to use
-   - Enter the kWp (kilowatt peak) capacity for each segment
-   - Example: A typical residential installation might be 5-10 kWp per roof surface
+3. **Configure Each Surface**
+   - **Enable** the surfaces you want to use
+   - **kWp (kilowatt peak)**: Total panel capacity for this surface (e.g., 5.0)
+   - **Azimuth**: Direction the roof faces
+     - 0° = North
+     - 90° = East
+     - 180° = South (optimal in Northern Hemisphere)
+     - 270° = West
+   - **Pitch/Tilt**: Roof angle (0° = flat, typical roof = 15-30°)
+   - **Area**: Optional, roof surface area in m²
 
 4. **Calculate Energy Production**
    - Click "Calculate Energy Production"
@@ -244,7 +234,7 @@ solar-estimate/
 ## API Endpoints
 
 ### POST `/api/maps/geocode`
-Geocode an address to coordinates
+Geocode an address to coordinates using Nominatim
 ```json
 {
   "address": "1600 Amphitheatre Parkway, Mountain View, CA"
@@ -252,7 +242,7 @@ Geocode an address to coordinates
 ```
 
 ### POST `/api/solar/detect-roof`
-Detect roof surfaces
+Initialize roof configuration for a location
 ```json
 {
   "address": "...",
@@ -262,7 +252,7 @@ Detect roof surfaces
 ```
 
 ### POST `/api/solar/irradiance`
-Get solar irradiance data
+Get solar irradiance data from NREL
 ```json
 {
   "lat": 37.4219999,
@@ -289,18 +279,20 @@ Calculate energy production
 
 ## Troubleshooting
 
-### "No roof data available"
-- Google Solar API may not have coverage in your area
-- You can still manually configure panels using estimated orientations
-
 ### Maps not loading
-- Check that REACT_APP_GOOGLE_MAPS_API_KEY is set correctly in frontend/.env
-- Verify Maps JavaScript API is enabled in Google Cloud Console
-- Check browser console for API errors
+- Clear browser cache
+- Check browser console for errors
+- Ensure you have internet connection (tiles load from external sources)
+
+### Geocoding errors
+- Nominatim has rate limits (max 1 request/second)
+- Be specific with addresses
+- Include city, state, and country for best results
 
 ### NREL API errors
 - Verify your NREL_API_KEY is correct in backend/.env
 - Check that you haven't exceeded the rate limit (1000/hour)
+- Ensure the API key is valid
 
 ### CORS errors
 - Backend CORS is configured to accept all origins in development
@@ -308,7 +300,8 @@ Calculate energy production
 
 ## Future Enhancements
 
-- [ ] Manual roof tracing with drawing tools
+- [ ] Drawing tools for manual roof tracing on the map
+- [ ] Automated roof detection integration (if available)
 - [ ] Cost estimation and ROI calculations
 - [ ] Export reports as PDF
 - [ ] Save/load projects
@@ -317,6 +310,7 @@ Calculate energy production
 - [ ] Battery storage modeling
 - [ ] Electricity rate optimization
 - [ ] User authentication and project storage
+- [ ] 3D roof visualization
 
 ## Contributing
 
@@ -329,7 +323,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - **NREL** for providing free solar irradiance data
-- **Google** for Maps and Solar APIs
+- **OpenStreetMap** contributors for free mapping data
+- **Leaflet** for the excellent mapping library
+- **Esri** for satellite imagery tiles
 - **Chart.js** for visualization capabilities
 
 ## Support

@@ -12,38 +12,48 @@ function App() {
   const [energyData, setEnergyData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [nextPanelId, setNextPanelId] = useState(0);
 
   const handleAddressSelect = async (address) => {
     setLoading(true);
     setError(null);
     
     try {
-      // Geocode address
+      // Geocode address using Nominatim
       const geocodeResult = await api.geocodeAddress(address);
       setLocation(geocodeResult);
 
-      // Detect roof
+      // Get basic roof data (no automated detection)
       const roofResult = await api.detectRoof(address, geocodeResult.lat, geocodeResult.lng);
       setRoofData(roofResult);
 
-      // Initialize panels from detected roof segments
-      if (roofResult.roofSegments && roofResult.roofSegments.length > 0) {
-        const initialPanels = roofResult.roofSegments.map((segment, index) => ({
-          id: segment.id || index,
-          kWp: 0, // User will configure
-          azimuth: segment.azimuth || 180,
-          pitch: segment.pitch || 20,
-          area: segment.area || 0,
-          enabled: false
-        }));
-        setPanels(initialPanels);
-      }
+      // Reset panels when new location is selected
+      setPanels([]);
+      setNextPanelId(0);
+      setEnergyData(null);
     } catch (err) {
       setError(err.message || 'Failed to process address');
       console.error(err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddPanel = () => {
+    const newPanel = {
+      id: nextPanelId,
+      kWp: 0,
+      azimuth: 180, // Default: South-facing
+      pitch: 20, // Default: 20° pitch
+      area: 0,
+      enabled: true
+    };
+    setPanels([...panels, newPanel]);
+    setNextPanelId(nextPanelId + 1);
+  };
+
+  const handleRemovePanel = (panelId) => {
+    setPanels(panels.filter(p => p.id !== panelId));
   };
 
   const handlePanelUpdate = (panelId, updates) => {
@@ -61,13 +71,14 @@ function App() {
     setError(null);
 
     try {
-      // Get irradiance data
+      // Get irradiance data from NREL
       const irradianceResult = await api.getSolarIrradiance(location.lat, location.lng);
 
       // Calculate energy production with enabled panels only
       const enabledPanels = panels.filter(p => p.enabled && p.kWp > 0);
       if (enabledPanels.length === 0) {
-        setError('Please enable at least one panel configuration');
+        setError('Please enable at least one panel with capacity > 0 kWp');
+        setLoading(false);
         return;
       }
 
@@ -85,7 +96,7 @@ function App() {
     <div className="app">
       <header className="header">
         <h1>☀️ Solar Energy Estimator</h1>
-        <p>Estimate your solar panel energy generation with automated roof detection</p>
+        <p>Estimate your solar panel energy generation - No API keys required!</p>
       </header>
 
       <div className="main-content">
@@ -109,6 +120,8 @@ function App() {
               roofData={roofData}
               panels={panels}
               onPanelUpdate={handlePanelUpdate}
+              onAddPanel={handleAddPanel}
+              onRemovePanel={handleRemovePanel}
               onCalculate={handleCalculateEnergy}
             />
           )}
