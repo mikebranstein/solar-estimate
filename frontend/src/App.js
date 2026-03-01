@@ -14,9 +14,27 @@ function App() {
   const [error, setError] = useState(null);
   const [nextPanelId, setNextPanelId] = useState(0);
   const [userLocation, setUserLocation] = useState(null);
+  const [zoom, setZoom] = useState(12);
 
-  // Get user's current location on mount
+  // Load saved location and zoom from localStorage, or use geolocation
   useEffect(() => {
+    const savedData = localStorage.getItem('solarEstimatorLastView');
+    
+    if (savedData) {
+      try {
+        const { location: savedLocation, zoom: savedZoom } = JSON.parse(savedData);
+        if (savedLocation && savedLocation.lat && savedLocation.lng) {
+          setUserLocation(savedLocation);
+          setZoom(savedZoom || 12);
+          console.log('Restored last viewed location');
+          return; // Skip geolocation if we have saved location
+        }
+      } catch (e) {
+        console.log('Failed to parse saved location data');
+      }
+    }
+    
+    // No saved location, try geolocation
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -39,6 +57,17 @@ function App() {
       setUserLocation({ lat: -36.8485, lng: 174.7633 });
     }
   }, []);
+
+  // Save location and zoom to localStorage whenever they change
+  useEffect(() => {
+    if (location) {
+      const dataToSave = {
+        location: { lat: location.lat, lng: location.lng },
+        zoom: zoom
+      };
+      localStorage.setItem('solarEstimatorLastView', JSON.stringify(dataToSave));
+    }
+  }, [location, zoom]);
 
   const handleAddressSelect = async (address) => {
     setLoading(true);
@@ -63,6 +92,10 @@ function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleZoomChange = (newZoom) => {
+    setZoom(newZoom);
   };
 
   const handleMapClick = async (lat, lng) => {
@@ -201,6 +234,8 @@ function App() {
             roofData={roofData} 
             onLocationSelect={handleMapClick}
             userLocation={userLocation}
+            zoom={zoom}
+            onZoomChange={handleZoomChange}
           />
         </div>
       </div>

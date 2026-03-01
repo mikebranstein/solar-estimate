@@ -12,17 +12,17 @@ L.Icon.Default.mergeOptions({
 });
 
 // Component to handle location changes and preserve zoom
-function MapController({ location }) {
+function MapController({ location, zoom }) {
   const map = useMap();
   
   React.useEffect(() => {
     if (location) {
       const currentZoom = map.getZoom();
-      // If zoomed in close (>= 19), keep current zoom; otherwise zoom to 21
-      const newZoom = currentZoom >= 19 ? currentZoom : 21;
+      // If zoomed in close (>= 19), keep current zoom; otherwise use provided zoom or default to 21
+      const newZoom = currentZoom >= 19 ? currentZoom : (zoom || 21);
       map.setView([location.lat, location.lng], newZoom);
     }
-  }, [location, map]);
+  }, [location, zoom, map]);
   
   return null;
 }
@@ -37,7 +37,28 @@ function LocationMarker({ onLocationSelect }) {
   return null;
 }
 
-function MapView({ location, roofData, onLocationSelect, userLocation }) {
+// Component to track zoom changes
+function ZoomHandler({ onZoomChange }) {
+  const map = useMap();
+  
+  React.useEffect(() => {
+    const handleZoomEnd = () => {
+      if (onZoomChange) {
+        onZoomChange(map.getZoom());
+      }
+    };
+    
+    map.on('zoomend', handleZoomEnd);
+    
+    return () => {
+      map.off('zoomend', handleZoomEnd);
+    };
+  }, [map, onZoomChange]);
+  
+  return null;
+}
+
+function MapView({ location, roofData, onLocationSelect, userLocation, zoom, onZoomChange }) {
   const defaultCenter = userLocation 
     ? [userLocation.lat, userLocation.lng] 
     : [-36.8485, 174.7633]; // Auckland, New Zealand fallback
@@ -48,13 +69,16 @@ function MapView({ location, roofData, onLocationSelect, userLocation }) {
     <div style={{ width: '100%', height: '100%' }}>
       <MapContainer
         center={center}
-        zoom={12}
+        zoom={zoom || 12}
         maxZoom={22}
         scrollWheelZoom={true}
         style={{ width: '100%', height: '100%' }}
       >
         {/* Handle location changes and zoom preservation */}
-        <MapController location={location} />
+        <MapController location={location} zoom={zoom} />
+        
+        {/* Track zoom changes */}
+        {onZoomChange && <ZoomHandler onZoomChange={onZoomChange} />}
         
         {/* Click handler for manual location selection */}
         {onLocationSelect && <LocationMarker onLocationSelect={onLocationSelect} />}
