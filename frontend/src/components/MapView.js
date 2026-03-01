@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -13,6 +13,22 @@ L.Icon.Default.mergeOptions({
 
 const defaultCenter = [37.7749, -122.4194]; // San Francisco
 
+// Component to handle location changes and preserve zoom
+function MapController({ location }) {
+  const map = useMap();
+  
+  React.useEffect(() => {
+    if (location) {
+      const currentZoom = map.getZoom();
+      // If zoomed in close (>= 19), keep current zoom; otherwise zoom to 21
+      const newZoom = currentZoom >= 19 ? currentZoom : 21;
+      map.setView([location.lat, location.lng], newZoom);
+    }
+  }, [location, map]);
+  
+  return null;
+}
+
 // Component to handle map clicks
 function LocationMarker({ onLocationSelect }) {
   useMapEvents({
@@ -25,16 +41,19 @@ function LocationMarker({ onLocationSelect }) {
 
 function MapView({ location, roofData, onLocationSelect }) {
   const center = location ? [location.lat, location.lng] : defaultCenter;
-  const zoom = location ? 19 : 12;
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <MapContainer
         center={center}
-        zoom={zoom}
+        zoom={12}
+        maxZoom={22}
+        scrollWheelZoom={true}
         style={{ width: '100%', height: '100%' }}
-        key={`${center[0]}-${center[1]}`} // Force re-render when location changes
       >
+        {/* Handle location changes and zoom preservation */}
+        <MapController location={location} />
+        
         {/* Click handler for manual location selection */}
         {onLocationSelect && <LocationMarker onLocationSelect={onLocationSelect} />}
         
@@ -42,14 +61,16 @@ function MapView({ location, roofData, onLocationSelect }) {
         <TileLayer
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
-          maxZoom={19}
+          maxZoom={22}
+          maxNativeZoom={19}
         />
         
         {/* Street Labels Overlay */}
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/only_labels/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-          maxZoom={19}
+          maxZoom={22}
+          maxNativeZoom={19}
         />
 
         {location && (
