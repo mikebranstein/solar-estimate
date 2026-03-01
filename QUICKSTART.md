@@ -102,6 +102,8 @@ You should see the Solar Energy Estimator interface with a map!
 
 ### Try It Out
 
+**Search by Address:**
+
 1. **Enter an address** in the search box, for example:
    ```
    1600 Amphitheatre Parkway, Mountain View, CA
@@ -110,6 +112,15 @@ You should see the Solar Energy Estimator interface with a map!
 2. **Click "Analyze Location"**
    - The map will zoom to your location with satellite imagery
    - The address will be geocoded using OpenStreetMap
+
+**Or Click on Map:**
+
+1. **Click anywhere on the map** to select a location
+   - No address needed!
+   - Great for remote locations or when address search fails
+   - The map will zoom in and show satellite imagery
+
+**Then Configure:**
 
 3. **Add roof surfaces**
    - Click "Add Roof Surface"

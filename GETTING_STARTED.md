@@ -38,8 +38,15 @@ Open http://localhost:3000
 
 ## ✅ Quick Test
 
+**Option 1: Search by Address**
 1. Enter address: `1600 Amphitheatre Parkway, Mountain View, CA`
 2. Click "Analyze Location" - see satellite map
+
+**Option 2: Click on Map**
+1. Click anywhere on the map to select a location
+2. The map will zoom to that location
+
+**Then Continue:**
 3. Click "Add Roof Surface"
 4. Configure:
    - kWp: `5.0`
@@ -57,6 +64,7 @@ Open http://localhost:3000
 **Can't find address?**
 - Be specific: include city, state, country
 - Example: "123 Main St, San Francisco, CA, USA"
+- **Or just click on the map!** No address needed
 
 **Backend errors?**
 - Make sure you added NREL API key to `backend/.env`

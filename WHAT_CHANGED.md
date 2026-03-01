@@ -21,6 +21,7 @@ Your Solar Energy Estimator has been completely updated to use **100% free servi
 ✅ **Same core functionality** - solar energy calculations  
 ✅ **Better satellite imagery** - free Esri satellite tiles  
 ✅ **Manual roof configuration** - easy interface to add multiple roof surfaces  
+✅ **Click-to-select location** - click anywhere on the map to set location  
 ✅ **No API limits** (except NREL's generous 1000/hour)  
 ✅ **Privacy friendly** - no tracking  
 ✅ **Cost: $0** - completely free!  
@@ -98,8 +99,15 @@ Open http://localhost:3000
 
 Try this example:
 
+**Method 1 - Search:**
 1. **Address**: `1600 Amphitheatre Parkway, Mountain View, CA`
 2. Click **"Analyze Location"**
+
+**Method 2 - Click Map:**
+1. Click anywhere on the satellite map
+2. The location will be set automatically
+
+**Then:**
 3. Click **"Add Roof Surface"**
 4. Configure the first surface:
    - **kWp**: 5.0

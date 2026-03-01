@@ -5,6 +5,7 @@ A comprehensive web application that estimates solar panel energy generation usi
 ## Features
 
 - 🗺️ **Free Mapping** - Uses Leaflet with OpenStreetMap and satellite imagery (no API key needed)
+- 🖱️ **Click-to-Select Location** - Click anywhere on the map or search by address
 - 🏠 **Manual Roof Configuration** - Easy interface to configure multiple roof surfaces
 - 📊 **Energy Production Calculations** - Accurate solar energy estimates based on:
   - Panel orientation (azimuth)
@@ -165,10 +166,17 @@ npm start
 
 ## How to Use
 
-1. **Enter Your Address**
+1. **Select Your Location**
+   
+   **Option A: Search by Address**
    - Type your full address in the search box
    - Click "Analyze Location"
-   - The map will show satellite imagery of your location
+   
+   **Option B: Click on Map**
+   - Click anywhere on the map to select a location
+   - Perfect when address search doesn't work or for remote locations
+   
+   The map will show satellite imagery of your location
 
 2. **Add Roof Surfaces**
    - Click "Add Roof Surface" to add each section of your roof

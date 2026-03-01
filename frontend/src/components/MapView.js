@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -13,7 +13,17 @@ L.Icon.Default.mergeOptions({
 
 const defaultCenter = [37.7749, -122.4194]; // San Francisco
 
-function MapView({ location, roofData }) {
+// Component to handle map clicks
+function LocationMarker({ onLocationSelect }) {
+  useMapEvents({
+    click(e) {
+      onLocationSelect(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+}
+
+function MapView({ location, roofData, onLocationSelect }) {
   const center = location ? [location.lat, location.lng] : defaultCenter;
   const zoom = location ? 19 : 12;
 
@@ -25,6 +35,9 @@ function MapView({ location, roofData }) {
         style={{ width: '100%', height: '100%' }}
         key={`${center[0]}-${center[1]}`} // Force re-render when location changes
       >
+        {/* Click handler for manual location selection */}
+        {onLocationSelect && <LocationMarker onLocationSelect={onLocationSelect} />}
+        
         {/* Satellite Imagery Tile Layer */}
         <TileLayer
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -48,22 +61,26 @@ function MapView({ location, roofData }) {
         )}
       </MapContainer>
 
-      {location && (
-        <div style={{
-          position: 'absolute',
-          top: '10px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'white',
-          padding: '8px 16px',
-          borderRadius: '4px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-          zIndex: 1000,
-          fontSize: '0.9rem'
-        }}>
-          💡 View your roof from satellite imagery, then configure panels below
-        </div>
-      )}
+      <div style={{
+        position: 'absolute',
+        top: '10px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        background: 'white',
+        padding: '8px 16px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+        zIndex: 1000,
+        fontSize: '0.9rem',
+        maxWidth: '90%',
+        textAlign: 'center'
+      }}>
+        {location ? (
+          <span>💡 View your roof from satellite imagery, then configure panels below</span>
+        ) : (
+          <span>🗺️ Click on the map to select a location or search by address above</span>
+        )}
+      </div>
     </div>
   );
 }

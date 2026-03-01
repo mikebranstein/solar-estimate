@@ -39,6 +39,38 @@ function App() {
     }
   };
 
+  const handleMapClick = async (lat, lng) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Use clicked coordinates directly
+      const locationData = {
+        lat: lat,
+        lng: lng,
+        formattedAddress: `Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`
+      };
+      setLocation(locationData);
+
+      // Get basic roof data
+      const roofResult = await api.detectRoof(null, lat, lng);
+      setRoofData({
+        ...roofResult,
+        formattedAddress: locationData.formattedAddress
+      });
+
+      // Reset panels when new location is selected
+      setPanels([]);
+      setNextPanelId(0);
+      setEnergyData(null);
+    } catch (err) {
+      setError(err.message || 'Failed to process location');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAddPanel = () => {
     const newPanel = {
       id: nextPanelId,
@@ -138,7 +170,11 @@ function App() {
         </div>
 
         <div className="map-container">
-          <MapView location={location} roofData={roofData} />
+          <MapView 
+            location={location} 
+            roofData={roofData} 
+            onLocationSelect={handleMapClick}
+          />
         </div>
       </div>
     </div>
