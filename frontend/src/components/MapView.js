@@ -11,7 +11,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
-const defaultCenter = [37.7749, -122.4194]; // San Francisco
+const defaultCenter = [-36.8485, 174.7633]; // Auckland, New Zealand
 
 // Component to handle location changes and preserve zoom
 function MapController({ location }) {
