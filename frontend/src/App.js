@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AddressSearch from './components/AddressSearch';
 import MapView from './components/MapView';
 import RoofEditor from './components/RoofEditor';
@@ -13,6 +13,32 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [nextPanelId, setNextPanelId] = useState(0);
+  const [userLocation, setUserLocation] = useState(null);
+
+  // Get user's current location on mount
+  useEffect(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.log('Geolocation not available or denied, using Auckland, NZ as default');
+          setUserLocation({ lat: -36.8485, lng: 174.7633 });
+        },
+        {
+          timeout: 5000,
+          maximumAge: 300000 // Cache for 5 minutes
+        }
+      );
+    } else {
+      // Geolocation not supported, use Auckland
+      setUserLocation({ lat: -36.8485, lng: 174.7633 });
+    }
+  }, []);
 
   const handleAddressSelect = async (address) => {
     setLoading(true);
@@ -128,7 +154,7 @@ function App() {
     <div className="app">
       <header className="header">
         <h1>☀️ Solar Energy Estimator</h1>
-        <p>Estimate your solar panel energy generation - No API keys required!</p>
+        <p>Estimate your solar panel energy generation - No API keys required! {userLocation && '📍 Using your current location'}</p>
       </header>
 
       <div className="main-content">
@@ -174,6 +200,7 @@ function App() {
             location={location} 
             roofData={roofData} 
             onLocationSelect={handleMapClick}
+            userLocation={userLocation}
           />
         </div>
       </div>

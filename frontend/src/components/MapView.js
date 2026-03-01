@@ -11,8 +11,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
-const defaultCenter = [-36.8485, 174.7633]; // Auckland, New Zealand
-
 // Component to handle location changes and preserve zoom
 function MapController({ location }) {
   const map = useMap();
@@ -39,7 +37,11 @@ function LocationMarker({ onLocationSelect }) {
   return null;
 }
 
-function MapView({ location, roofData, onLocationSelect }) {
+function MapView({ location, roofData, onLocationSelect, userLocation }) {
+  const defaultCenter = userLocation 
+    ? [userLocation.lat, userLocation.lng] 
+    : [-36.8485, 174.7633]; // Auckland, New Zealand fallback
+  
   const center = location ? [location.lat, location.lng] : defaultCenter;
 
   return (
@@ -99,7 +101,7 @@ function MapView({ location, roofData, onLocationSelect }) {
         {location ? (
           <span>💡 View your roof from satellite imagery, then configure panels below</span>
         ) : (
-          <span>🗺️ Click on the map to select a location or search by address above</span>
+          <span>🗺️ {userLocation ? 'Showing your current location - ' : ''}Click on the map to select a location or search by address above</span>
         )}
       </div>
     </div>
