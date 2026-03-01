@@ -22,11 +22,15 @@ function App() {
     
     if (savedData) {
       try {
-        const { location: savedLocation, zoom: savedZoom } = JSON.parse(savedData);
+        const { location: savedLocation, zoom: savedZoom, roofData: savedRoofData } = JSON.parse(savedData);
         if (savedLocation && savedLocation.lat && savedLocation.lng) {
-          setUserLocation(savedLocation);
+          // Restore the selected location, zoom, and roof data
+          setLocation(savedLocation);
           setZoom(savedZoom || 12);
-          console.log('Restored last viewed location');
+          if (savedRoofData) {
+            setRoofData(savedRoofData);
+          }
+          console.log('Restored last viewed location and zoom level');
           return; // Skip geolocation if we have saved location
         }
       } catch (e) {
@@ -58,16 +62,26 @@ function App() {
     }
   }, []);
 
-  // Save location and zoom to localStorage whenever they change
+  // Save location, zoom, and roofData to localStorage whenever they change
   useEffect(() => {
     if (location) {
       const dataToSave = {
-        location: { lat: location.lat, lng: location.lng },
-        zoom: zoom
+        location: { 
+          lat: location.lat, 
+          lng: location.lng,
+          formattedAddress: location.formattedAddress 
+        },
+        zoom: zoom,
+        roofData: roofData ? {
+          formattedAddress: roofData.formattedAddress,
+          lat: roofData.lat,
+          lng: roofData.lng
+        } : null
       };
       localStorage.setItem('solarEstimatorLastView', JSON.stringify(dataToSave));
+      console.log('Saved location and zoom to localStorage');
     }
-  }, [location, zoom]);
+  }, [location, zoom, roofData]);
 
   const handleAddressSelect = async (address) => {
     setLoading(true);
