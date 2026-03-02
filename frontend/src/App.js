@@ -36,6 +36,7 @@ function App() {
   const [roofSections, setRoofSections] = useState([]);
   const [editingRoofIndex, setEditingRoofIndex] = useState(null);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+  const [fileHandle, setFileHandle] = useState(null);
   const autoSaveTimeoutRef = useRef(null);
 
   // Load properties and active property on mount
@@ -98,7 +99,7 @@ function App() {
 
   // Auto-save to file when properties change (debounced)
   useEffect(() => {
-    if (!autoSaveEnabled || properties.length === 0) return;
+    if (!autoSaveEnabled || !fileHandle || properties.length === 0) return;
 
     // Clear existing timeout
     if (autoSaveTimeoutRef.current) {
@@ -106,21 +107,19 @@ function App() {
     }
 
     // Set new timeout to save after 2 seconds of no changes
-    autoSaveTimeoutRef.current = setTimeout(() => {
+    autoSaveTimeoutRef.current = setTimeout(async () => {
       try {
         const jsonData = exportProperties();
-        const blob = new Blob([jsonData], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `solar-properties-autosave.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        const writable = await fileHandle.createWritable();
+        await writable.write(jsonData);
+        await writable.close();
         console.log('Properties auto-saved to file');
       } catch (error) {
         console.error('Auto-save failed:', error);
+        // If write fails, disable auto-save
+        setAutoSaveEnabled(false);
+        setFileHandle(null);
+        alert('Auto-save failed. Please re-enable and select a file again.');
       }
     }, 2000);
 
@@ -129,7 +128,7 @@ function App() {
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [properties, autoSaveEnabled]);
+  }, [properties, autoSaveEnabled, fileHandle]);
 
   // Load property data into state
   const loadPropertyData = (property) => {
@@ -219,25 +218,44 @@ function App() {
     setNextPanelId(0);
   };
 
-  const handleAutoSaveToggle = (enabled) => {
-    setAutoSaveEnabled(enabled);
-    if (enabled && properties.length > 0) {
-      // Immediately save when enabling auto-save
+  const handleAutoSaveToggle = async (enabled) => {
+    if (enabled) {
+      // Check if File System Access API is supported
+      if (!('showSaveFilePicker' in window)) {
+        alert('Auto-save to file is not supported in your browser. Your data is still saved in the browser automatically.');
+        return;
+      }
+
       try {
+        // Let user choose where to save the file
+        const handle = await window.showSaveFilePicker({
+          suggestedName: 'solar-properties-autosave.json',
+          types: [{
+            description: 'JSON Files',
+            accept: { 'application/json': ['.json'] }
+          }]
+        });
+
+        setFileHandle(handle);
+        setAutoSaveEnabled(true);
+
+        // Immediately save to the selected file
         const jsonData = exportProperties();
-        const blob = new Blob([jsonData], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `solar-properties-autosave.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        const writable = await handle.createWritable();
+        await writable.write(jsonData);
+        await writable.close();
+        
         console.log('Auto-save enabled and initial save completed');
       } catch (error) {
-        console.error('Initial auto-save failed:', error);
+        if (error.name !== 'AbortError') {
+          console.error('Failed to enable auto-save:', error);
+          alert('Failed to enable auto-save. Please try again.');
+        }
       }
+    } else {
+      // Disable auto-save
+      setAutoSaveEnabled(false);
+      setFileHandle(null);
     }
   };
 
@@ -446,6 +464,7 @@ function App() {
         onPropertiesImported={handlePropertiesImported}
         autoSaveEnabled={autoSaveEnabled}
         onAutoSaveToggle={handleAutoSaveToggle}
+        fileHandle={fileHandle}
       />
 
       <div className="main-content">

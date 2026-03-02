@@ -11,7 +11,8 @@ function PropertyManager({
   onReloadProperty,
   onPropertiesImported,
   autoSaveEnabled,
-  onAutoSaveToggle
+  onAutoSaveToggle,
+  fileHandle
 }) {
   const [showManager, setShowManager] = useState(false);
   const [showNewPropertyDialog, setShowNewPropertyDialog] = useState(false);
@@ -151,15 +152,22 @@ function PropertyManager({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={{ margin: 0 }}>Your Properties</h3>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={autoSaveEnabled || false}
-                  onChange={(e) => onAutoSaveToggle && onAutoSaveToggle(e.target.checked)}
-                  style={{ cursor: 'pointer' }}
-                />
-                <span title="Automatically save to file when changes are made">🔄 Auto-save</span>
-              </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={autoSaveEnabled || false}
+                    onChange={(e) => onAutoSaveToggle && onAutoSaveToggle(e.target.checked)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <span title="Automatically save to file when changes are made">🔄 Auto-save</span>
+                </label>
+                {autoSaveEnabled && fileHandle && (
+                  <div style={{ fontSize: '0.75rem', color: '#666', marginLeft: '1.5rem' }}>
+                    Saving to: {fileHandle.name}
+                  </div>
+                )}
+              </div>
               <button
                 onClick={handleExportToFile}
                 className="btn-export"
