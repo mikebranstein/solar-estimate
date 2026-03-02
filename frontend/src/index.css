@@ -288,6 +288,43 @@ input:focus, select:focus {
   background: #138496;
 }
 
+.btn-export {
+  padding: 0.5rem 0.75rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-export:hover {
+  background: #5567d8;
+}
+
+.btn-export:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-import {
+  padding: 0.5rem 0.75rem;
+  background: #f39c12;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-import:hover {
+  background: #e67e22;
+}
+
 .property-dropdown {
   background: white;
   border: 1px solid #dee2e6;

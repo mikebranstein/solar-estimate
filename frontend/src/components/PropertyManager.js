@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { getPropertySummary } from '../utils/propertyStorage';
+import React, { useState, useRef } from 'react';
+import { getPropertySummary, exportProperties, importProperties } from '../utils/propertyStorage';
 
 function PropertyManager({ 
   properties, 
@@ -8,13 +8,17 @@ function PropertyManager({
   onCreateProperty, 
   onDeleteProperty,
   onRenameProperty,
-  onReloadProperty
+  onReloadProperty,
+  onPropertiesImported,
+  autoSaveEnabled,
+  onAutoSaveToggle
 }) {
   const [showManager, setShowManager] = useState(false);
   const [showNewPropertyDialog, setShowNewPropertyDialog] = useState(false);
   const [newPropertyName, setNewPropertyName] = useState('');
   const [editingPropertyId, setEditingPropertyId] = useState(null);
   const [editingName, setEditingName] = useState('');
+  const fileInputRef = useRef(null);
 
   const handleCreateProperty = () => {
     if (newPropertyName.trim()) {
@@ -45,6 +49,61 @@ function PropertyManager({
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const handleExportToFile = () => {
+    try {
+      const jsonData = exportProperties();
+      const blob = new Blob([jsonData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `solar-properties-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting properties:', error);
+      alert('Failed to export properties. Please try again.');
+    }
+  };
+
+  const handleImportFromFile = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const jsonData = e.target.result;
+        const success = importProperties(jsonData);
+        
+        if (success) {
+          if (onPropertiesImported) {
+            onPropertiesImported();
+          }
+          alert('Properties imported successfully!');
+        } else {
+          alert('Failed to import properties. Please check the file format.');
+        }
+      } catch (error) {
+        console.error('Error importing properties:', error);
+        alert('Failed to import properties. Please check the file format.');
+      }
+      
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   return (
@@ -89,7 +148,42 @@ function PropertyManager({
       {/* Property Manager Dropdown */}
       {showManager && (
         <div className="property-dropdown">
-          <h3>Your Properties</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ margin: 0 }}>Your Properties</h3>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={autoSaveEnabled || false}
+                  onChange={(e) => onAutoSaveToggle && onAutoSaveToggle(e.target.checked)}
+                  style={{ cursor: 'pointer' }}
+                />
+                <span title="Automatically save to file when changes are made">🔄 Auto-save</span>
+              </label>
+              <button
+                onClick={handleExportToFile}
+                className="btn-export"
+                title="Save all properties to file"
+                disabled={properties.length === 0}
+              >
+                💾 Save to File
+              </button>
+              <button
+                onClick={triggerFileInput}
+                className="btn-import"
+                title="Load properties from file"
+              >
+                📂 Load from File
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleImportFromFile}
+                style={{ display: 'none' }}
+              />
+            </div>
+          </div>
           {properties.length === 0 ? (
             <div className="empty-state">
               <p>No properties saved yet.</p>

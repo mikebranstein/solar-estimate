@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AddressSearch from './components/AddressSearch';
 import MapView from './components/MapView';
 import RoofEditor from './components/RoofEditor';
@@ -13,7 +13,8 @@ import {
   getPropertyById,
   setActivePropertyId,
   getActivePropertyId,
-  clearActiveProperty
+  clearActiveProperty,
+  exportProperties
 } from './utils/propertyStorage';
 
 function App() {
@@ -34,6 +35,8 @@ function App() {
   const [drawingMode, setDrawingMode] = useState(false);
   const [roofSections, setRoofSections] = useState([]);
   const [editingRoofIndex, setEditingRoofIndex] = useState(null);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+  const autoSaveTimeoutRef = useRef(null);
 
   // Load properties and active property on mount
   useEffect(() => {
@@ -92,6 +95,41 @@ function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location, roofSections, panels, energyData, zoom, nextPanelId]);
+
+  // Auto-save to file when properties change (debounced)
+  useEffect(() => {
+    if (!autoSaveEnabled || properties.length === 0) return;
+
+    // Clear existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Set new timeout to save after 2 seconds of no changes
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      try {
+        const jsonData = exportProperties();
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `solar-properties-autosave.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        console.log('Properties auto-saved to file');
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+      }
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [properties, autoSaveEnabled]);
 
   // Load property data into state
   const loadPropertyData = (property) => {
@@ -162,6 +200,43 @@ function App() {
       setProperties(properties.map(p => p.id === propertyId ? updated : p));
       if (activeProperty?.id === propertyId) {
         setActiveProperty(updated);
+      }
+    }
+  };
+
+  const handlePropertiesImported = () => {
+    const loadedProperties = getAllProperties();
+    setProperties(loadedProperties);
+    
+    // Clear active property since imported data might not include it
+    setActiveProperty(null);
+    clearActiveProperty();
+    setLocation(null);
+    setRoofData(null);
+    setRoofSections([]);
+    setPanels([]);
+    setEnergyData(null);
+    setNextPanelId(0);
+  };
+
+  const handleAutoSaveToggle = (enabled) => {
+    setAutoSaveEnabled(enabled);
+    if (enabled && properties.length > 0) {
+      // Immediately save when enabling auto-save
+      try {
+        const jsonData = exportProperties();
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `solar-properties-autosave.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        console.log('Auto-save enabled and initial save completed');
+      } catch (error) {
+        console.error('Initial auto-save failed:', error);
       }
     }
   };
@@ -368,6 +443,9 @@ function App() {
         onDeleteProperty={handleDeleteProperty}
         onRenameProperty={handleRenameProperty}
         onReloadProperty={handleReloadProperty}
+        onPropertiesImported={handlePropertiesImported}
+        autoSaveEnabled={autoSaveEnabled}
+        onAutoSaveToggle={handleAutoSaveToggle}
       />
 
       <div className="main-content">
