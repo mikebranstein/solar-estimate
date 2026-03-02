@@ -1,9 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalculate, onAddPanel, onRemovePanel, onEditRoofSection, location }) {
   // Determine hemisphere from location
   const hemisphere = location && location.lat >= 0 ? 'Northern' : 'Southern';
   const optimalDirection = hemisphere === 'Northern' ? 'South (180°)' : 'North (0°)';
+  
+  // Track which panel name is being edited
+  const [editingNameId, setEditingNameId] = useState(null);
+  const [editingNameValue, setEditingNameValue] = useState('');
+  
+  const handleStartEditName = (panelId, currentName) => {
+    setEditingNameId(panelId);
+    setEditingNameValue(currentName || `Roof Surface ${panelId + 1}`);
+  };
+  
+  const handleSaveName = (panelId) => {
+    onPanelUpdate(panelId, { name: editingNameValue });
+    setEditingNameId(null);
+    setEditingNameValue('');
+  };
+  
+  const handleCancelEditName = () => {
+    setEditingNameId(null);
+    setEditingNameValue('');
+  };
   
   const handleFieldChange = (panelId, field, value) => {
     onPanelUpdate(panelId, { [field]: parseFloat(value) || 0 });
@@ -76,23 +96,93 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
             <div key={panel.id} className="panel-item">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontWeight: '600', fontSize: '1rem', margin: 0, color: '#333', display: 'block', marginBottom: '0.5rem' }}>
-                    {panel.name || `Roof Surface ${panel.id + 1}`}
-                  </label>
-                  <input
-                    type="text"
-                    value={panel.name || `Roof Surface ${panel.id + 1}`}
-                    onChange={(e) => onPanelUpdate(panel.id, { name: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '0.9rem',
-                      margin: 0
-                    }}
-                    placeholder="Enter roof section name"
-                  />
+                  {editingNameId === panel.id ? (
+                    // Editing mode: show text input with save/cancel buttons
+                    <div>
+                      <input
+                        type="text"
+                        value={editingNameValue}
+                        onChange={(e) => setEditingNameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveName(panel.id);
+                          if (e.key === 'Escape') handleCancelEditName();
+                        }}
+                        autoFocus
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          border: '2px solid #667eea',
+                          borderRadius: '4px',
+                          fontSize: '0.95rem',
+                          margin: 0,
+                          marginBottom: '0.5rem'
+                        }}
+                        placeholder="Enter roof section name"
+                      />
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          onClick={() => handleSaveName(panel.id)}
+                          style={{
+                            flex: 1,
+                            padding: '0.4rem',
+                            fontSize: '0.85rem',
+                            background: '#28a745'
+                          }}
+                        >
+                          ✓ Save
+                        </button>
+                        <button
+                          onClick={handleCancelEditName}
+                          style={{
+                            flex: 1,
+                            padding: '0.4rem',
+                            fontSize: '0.85rem',
+                            background: '#6c757d'
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    // Display mode: show label with edit icon
+                    <div 
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem',
+                        padding: '0.35rem 0'
+                      }}
+                    >
+                      <h4 style={{ 
+                        margin: 0, 
+                        fontWeight: '600', 
+                        fontSize: '1.05rem', 
+                        color: '#333',
+                        flex: 1
+                      }}>
+                        {panel.name || `Roof Surface ${panel.id + 1}`}
+                      </h4>
+                      <button
+                        onClick={() => handleStartEditName(panel.id, panel.name)}
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid #ddd',
+                          padding: '0.25rem 0.5rem',
+                          fontSize: '0.9rem',
+                          cursor: 'pointer',
+                          borderRadius: '4px',
+                          color: '#667eea',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.25rem'
+                        }}
+                        title="Rename section"
+                      >
+                        ✏️
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => onRemovePanel(panel.id)}
