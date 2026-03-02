@@ -307,7 +307,16 @@ function App() {
   };
 
   const handleRemovePanel = (panelId) => {
+    // Find the index of the panel being removed
+    const panelIndex = panels.findIndex(p => p.id === panelId);
+    
+    // Remove the panel
     setPanels(panels.filter(p => p.id !== panelId));
+    
+    // Remove the corresponding roof section if it exists
+    if (panelIndex >= 0 && panelIndex < roofSections.length) {
+      setRoofSections(roofSections.filter((_, idx) => idx !== panelIndex));
+    }
   };
 
   const handlePanelUpdate = (panelId, updates) => {

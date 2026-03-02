@@ -92,7 +92,7 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
             </p>
           </div>
         ) : (
-          panels.map(panel => (
+          panels.map((panel, panelIndex) => (
             <div key={panel.id} className="panel-item">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
                 <div style={{ flex: 1 }}>
@@ -266,9 +266,9 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
               </div>
 
               {/* Edit Edges button - only show if this panel has a corresponding roof section */}
-              {roofSections[panel.id] && onEditRoofSection && (
+              {roofSections[panelIndex] && onEditRoofSection && (
                 <button
-                  onClick={() => onEditRoofSection(panel.id)}
+                  onClick={() => onEditRoofSection(panelIndex)}
                   style={{
                     width: '100%',
                     marginTop: '0.75rem',
