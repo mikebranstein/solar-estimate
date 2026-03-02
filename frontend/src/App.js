@@ -128,6 +128,15 @@ function App() {
     }
   };
 
+  const handleReloadProperty = () => {
+    if (activeProperty) {
+      const property = getPropertyById(activeProperty.id);
+      if (property) {
+        loadPropertyData(property);
+      }
+    }
+  };
+
   const handleDeleteProperty = (propertyId) => {
     deleteProperty(propertyId);
     setProperties(properties.filter(p => p.id !== propertyId));
@@ -170,18 +179,10 @@ function App() {
       const roofResult = await api.detectRoof(address, geocodeResult.lat, geocodeResult.lng);
       setRoofData(roofResult);
 
-      // If no active property, suggest creating one
+      // Auto-create property if none exists
       if (!activeProperty) {
         const propertyName = geocodeResult.formattedAddress.split(',')[0] || 'New Property';
-        if (window.confirm(`Create a new property for "${propertyName}"? This will save your roof sections and panel configurations.`)) {
-          handleCreateProperty(propertyName);
-        }
-      } else {
-        // Clear roof sections and panels for new location in existing property
-        setRoofSections([]);
-        setPanels([]);
-        setNextPanelId(0);
-        setEnergyData(null);
+        handleCreateProperty(propertyName);
       }
     } catch (err) {
       setError(err.message || 'Failed to process address');
@@ -215,17 +216,9 @@ function App() {
         formattedAddress: locationData.formattedAddress
       });
 
-      // If no active property, suggest creating one
+      // Auto-create property if none exists
       if (!activeProperty) {
-        if (window.confirm(`Create a new property for this location? This will save your roof sections and panel configurations.`)) {
-          handleCreateProperty('Location Property');
-        }
-      } else {
-        // Clear roof sections and panels for new location in existing property
-        setRoofSections([]);
-        setPanels([]);
-        setNextPanelId(0);
-        setEnergyData(null);
+        handleCreateProperty('Location Property');
       }
     } catch (err) {
       setError(err.message || 'Failed to process location');
@@ -365,11 +358,14 @@ function App() {
         onCreateProperty={handleCreateProperty}
         onDeleteProperty={handleDeleteProperty}
         onRenameProperty={handleRenameProperty}
+        onReloadProperty={handleReloadProperty}
       />
 
       <div className="main-content">
         <div className="sidebar">
-          <AddressSearch onAddressSelect={handleAddressSelect} />
+          {!(activeProperty && location) && (
+            <AddressSearch onAddressSelect={handleAddressSelect} />
+          )}
 
           {loading && (
             <div className="loading">

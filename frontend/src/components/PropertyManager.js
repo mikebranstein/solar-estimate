@@ -7,7 +7,8 @@ function PropertyManager({
   onSelectProperty, 
   onCreateProperty, 
   onDeleteProperty,
-  onRenameProperty 
+  onRenameProperty,
+  onReloadProperty
 }) {
   const [showManager, setShowManager] = useState(false);
   const [showNewPropertyDialog, setShowNewPropertyDialog] = useState(false);
@@ -65,13 +66,24 @@ function PropertyManager({
             </span>
           )}
         </div>
-        <button
-          className="btn-new-property"
-          onClick={() => setShowNewPropertyDialog(true)}
-          title="Add New Property"
-        >
-          + New Property
-        </button>
+        <div className="property-actions-bar">
+          {activeProperty && onReloadProperty && (
+            <button
+              className="btn-reload-property"
+              onClick={onReloadProperty}
+              title="Reload current property data"
+            >
+              🔄 Reload
+            </button>
+          )}
+          <button
+            className="btn-new-property"
+            onClick={() => setShowNewPropertyDialog(true)}
+            title="Add New Property"
+          >
+            + New Property
+          </button>
+        </div>
       </div>
 
       {/* Property Manager Dropdown */}

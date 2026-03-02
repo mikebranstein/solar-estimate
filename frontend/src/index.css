@@ -219,6 +219,12 @@ input:focus, select:focus {
   border-radius: 12px;
 }
 
+.property-actions-bar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .btn-new-property {
   padding: 0.5rem 1rem;
   background: #28a745;
@@ -233,6 +239,25 @@ input:focus, select:focus {
 
 .btn-new-property:hover {
   background: #218838;
+}
+
+.btn-reload-property {
+  padding: 0.5rem 1rem;
+  background: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-reload-property:hover {
+  background: #138496;
 }
 
 .property-dropdown {
