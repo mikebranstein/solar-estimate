@@ -225,7 +225,27 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1location && (
+        <h1>☀️ Solar Energy Estimator</h1>
+        <p>Estimate your solar panel energy generation - No API keys required! {userLocation && '📍 Using your current location'}</p>
+      </header>
+
+      <div className="main-content">
+        <div className="sidebar">
+          <AddressSearch onAddressSelect={handleAddressSelect} />
+
+          {loading && (
+            <div className="loading">
+              <p>Loading...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="error">
+              <strong>Error:</strong> {error}
+            </div>
+          )}
+
+          {location && (
             <div style={{ marginBottom: '1rem', padding: '1rem', background: '#f8f9fa', borderRadius: '4px' }}>
               <button
                 onClick={() => setDrawingMode(!drawingMode)}
@@ -249,29 +269,6 @@ function App() {
                   : 'Draw the outline of each roof section to automatically calculate its direction and area'
                 }
               </p>
-            </div>
-          )}
-
-          {>☀️ Solar Energy Estimator</h1>
-        <p>Estimate your solar panel energy generation - No API keys required! {userLocation && '📍 Using your current location'}</p>
-      </header>
-  drawingMode={drawingMode}
-            onPolygonComplete={handlePolygonComplete}
-            roofSections={roofSections}
-          
-      <div className="main-content">
-        <div className="sidebar">
-          <AddressSearch onAddressSelect={handleAddressSelect} />
-
-          {loading && (
-            <div className="loading">
-              <p>Loading...</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="error">
-              <strong>Error:</strong> {error}
             </div>
           )}
 
@@ -306,6 +303,9 @@ function App() {
             userLocation={userLocation}
             zoom={zoom}
             onZoomChange={handleZoomChange}
+            drawingMode={drawingMode}
+            onPolygonComplete={handlePolygonComplete}
+            roofSections={roofSections}
           />
         </div>
       </div>

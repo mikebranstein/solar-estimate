@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
 import 'leaflet-draw';
-import { calculateRoofAzimuth, calculatePolygonArea, getCardinalDirection, calculateCentroid, getHemisphere, getSolarEfficiency, getOptimalAzimuth } from '../utils/roofCalculations';
+import { calculateRoofAzimuth, calculatePolygonArea, getCardinalDirection, calculateCentroid, getHemisphere, getSolarEfficiency } from '../utils/roofCalculations';
 
 // Fix for default marker icon issue with Leaflet in React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -61,17 +61,7 @@ function ZoomHandler({ onZoomChange }) {
   return null;
 }
 
-// Component to han
-  location, 
-  roofData, 
-  onLocationSelect, 
-  userLocation, 
-  zoom, 
-  onZoomChange,
-  drawingMode = false,
-  onPolygonComplete,
-  roofSections = []
-
+// Component to handle drawing tools
 function DrawingControl({ onPolygonComplete, drawingMode }) {
   const map = useMap();
   const drawControlRef = React.useRef(null);
@@ -79,7 +69,8 @@ function DrawingControl({ onPolygonComplete, drawingMode }) {
 
   React.useEffect(() => {
     // Add the drawn items layer to the map
-    map.addLayer(drawnItemsRef.current);
+    const drawnItems = drawnItemsRef.current;
+    map.addLayer(drawnItems);
 
     // Initialize drawing control
     const drawControl = new L.Control.Draw({
@@ -101,7 +92,7 @@ function DrawingControl({ onPolygonComplete, drawingMode }) {
         circlemarker: false
       },
       edit: {
-        featureGroup: drawnItemsRef.current,
+        featureGroup: drawnItems,
         remove: true,
         edit: true
       }
@@ -115,7 +106,7 @@ function DrawingControl({ onPolygonComplete, drawingMode }) {
     // Handle polygon creation
     const onDrawCreated = (e) => {
       const layer = e.layer;
-      drawnItemsRef.current.addLayer(layer);
+      drawnItems.addLayer(layer);
 
       // Extract coordinates from the polygon
       const latlngs = layer.getLatLngs()[0];
@@ -166,7 +157,7 @@ function DrawingControl({ onPolygonComplete, drawingMode }) {
         map.removeControl(drawControlRef.current);
       }
       
-      map.removeLayer(drawnItemsRef.current);
+      map.removeLayer(drawnItems);
     };
   }, [map, onPolygonComplete, drawingMode]);
 
@@ -179,7 +170,6 @@ function RoofSections({ sections, location }) {
 
   // Determine hemisphere from location
   const hemisphere = location ? getHemisphere(location.lat) : 'northern';
-  const optimalDirection = hemisphere === 'northern' ? 'South' : 'North';
 
   return (
     <>

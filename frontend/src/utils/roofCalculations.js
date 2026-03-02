@@ -130,8 +130,6 @@ export function calculatePolygonArea(coordinates) {
     return 0;
   }
 
-  const R = 6371000; // Earth's radius in meters
-
   // Convert to radians
   const coords = coordinates.map(c => ({
     lat: c.lat * Math.PI / 180,
