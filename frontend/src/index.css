@@ -151,16 +151,40 @@ input:focus, select:focus {
 .leaflet-tooltip.roof-label {
   background: rgba(255, 255, 255, 0.95);
   border: 2px solid #333;
-  border-radius: 4px;
-  padding: 4px 8px;
+  border-radius: 6px;
+  padding: 6px 10px;
   font-size: 12px;
   font-weight: bold;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.4);
   white-space: nowrap;
+  pointer-events: none;
 }
 
+/* Show arrow pointing down to the roof section */
 .leaflet-tooltip.roof-label::before {
-  display: none;
+  border-top-color: #333 !important;
+  border-top-width: 8px;
+  border-left-width: 8px;
+  border-right-width: 8px;
+}
+
+/* Custom label markers positioned away from roofs */
+.roof-label-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.roof-label-content {
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid #333;
+  border-radius: 6px;
+  padding: 6px 10px;
+  text-align: center;
+  color: #000;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+  white-space: nowrap;
+  pointer-events: none;
+  min-width: 100px;
 }
 
 /* Property Manager Styles */

@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, Polygon, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, Polygon, Tooltip, Polyline, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
@@ -166,11 +166,24 @@ function DrawingControl({ onPolygonComplete, drawingMode }) {
 }
 
 // Component to display roof sections with labels
-function RoofSections({ sections, panels = [], location }) {
+function RoofSections({ sections, panels = [], location, editingRoofIndex = null }) {
   if (!sections || sections.length === 0) return null;
 
   // Determine hemisphere from location
   const hemisphere = location ? getHemisphere(location.lat) : 'northern';
+
+  // Calculate label positions to avoid overlaps
+  const calculateLabelOffset = (index, totalSections) => {
+    // Distribute labels around the sections in a circular pattern
+    const angle = (index / totalSections) * 360;
+    const radiusLat = 0.00008; // Approximately 9 meters
+    const radiusLng = 0.00012; // Adjust for longitude
+    
+    return {
+      lat: Math.sin(angle * Math.PI / 180) * radiusLat,
+      lng: Math.cos(angle * Math.PI / 180) * radiusLng
+    };
+  };
 
   return (
     <>
@@ -184,32 +197,77 @@ function RoofSections({ sections, panels = [], location }) {
         
         // Get panel name if available
         const panelName = panels[index]?.name || `Roof Section ${index + 1}`;
+        
+        // Hide label when this section is being edited
+        const isBeingEdited = editingRoofIndex === index;
+        
+        // Calculate offset position for label
+        const offset = calculateLabelOffset(index, sections.length);
+        const labelPosition = centroid ? {
+          lat: centroid.lat + offset.lat,
+          lng: centroid.lng + offset.lng
+        } : null;
 
         return (
-          <Polygon
-            key={index}
-            positions={positions}
-            pathOptions={{
-              color: color,
-              fillColor: color,
-              fillOpacity: 0.3,
-              weight: 3
-            }}
-          >
-            {centroid && (
-              <Tooltip permanent direction="center" className="roof-label">
-                <div style={{ textAlign: 'center', fontWeight: 'bold' }}>
-                  <div>{panelName}</div>
-                  <div style={{ fontSize: '0.8em', marginTop: '2px' }}>{section.direction}</div>
-                  <div style={{ fontSize: '0.85em' }}>{section.azimuth}°</div>
-                  <div style={{ fontSize: '0.85em' }}>{section.area} m²</div>
-                  <div style={{ fontSize: '0.75em', marginTop: '2px', opacity: 0.9 }}>
-                    {efficiency.rating.toUpperCase()}
-                  </div>
-                </div>
-              </Tooltip>
+          <React.Fragment key={index}>
+            <Polygon
+              positions={positions}
+              pathOptions={{
+                color: color,
+                fillColor: color,
+                fillOpacity: isBeingEdited ? 0.15 : 0.3,
+                weight: isBeingEdited ? 2 : 3
+              }}
+            />
+            
+            {/* Label positioned away from roof with connecting line */}
+            {centroid && labelPosition && !isBeingEdited && (
+              <>
+                {/* Connecting line from centroid to label */}
+                <Polyline
+                  positions={[
+                    [centroid.lat, centroid.lng],
+                    [labelPosition.lat, labelPosition.lng]
+                  ]}
+                  pathOptions={{
+                    color: '#333',
+                    weight: 2,
+                    opacity: 0.7,
+                    dashArray: '5, 5'
+                  }}
+                />
+                
+                {/* Small circle at centroid */}
+                <CircleMarker
+                  center={[centroid.lat, centroid.lng]}
+                  radius={4}
+                  pathOptions={{
+                    color: '#333',
+                    fillColor: color,
+                    fillOpacity: 1,
+                    weight: 2
+                  }}
+                />
+                
+                {/* Label positioned away from roof */}
+                <Marker
+                  position={[labelPosition.lat, labelPosition.lng]}
+                  icon={L.divIcon({
+                    className: 'roof-label-marker',
+                    html: `
+                      <div class="roof-label-content" style="background-color: ${color}; border-color: ${color};">
+                        <div style="font-weight: bold; font-size: 13px; margin-bottom: 2px;">${panelName}</div>
+                        <div style="font-size: 11px;">${section.direction} • ${section.azimuth}°</div>
+                        <div style="font-size: 11px;">${section.area} m² • ${efficiency.rating.toUpperCase()}</div>
+                      </div>
+                    `,
+                    iconSize: [120, 60],
+                    iconAnchor: [60, 30]
+                  })}
+                />
+              </>
             )}
-          </Polygon>
+          </React.Fragment>
         );
       })}
     </>
@@ -264,7 +322,7 @@ function MapView({
         )}
         
         {/* Display existing roof sections */}
-        <RoofSections sections={roofSections} panels={panels} location={location} />
+        <RoofSections sections={roofSections} panels={panels} location={location} editingRoofIndex={editingRoofIndex} />
         
         {/* Edge selector for refining roof direction */}
         {editingRoofIndex !== null && roofSections[editingRoofIndex] && (
