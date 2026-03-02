@@ -238,8 +238,7 @@ function App() {
       kWp: 0,
       azimuth: defaultAzimuth,
       pitch: 20, // Default: 20° pitch
-      area: 0,
-      enabled: true
+      area: 0
     };
     setPanels([...panels, newPanel]);
     setNextPanelId(nextPanelId + 1);
@@ -256,8 +255,7 @@ function App() {
       kWp: 0, // User will set this
       azimuth: sectionData.azimuth,
       pitch: 20, // Default pitch, user can adjust
-      area: sectionData.area,
-      enabled: true
+      area: sectionData.area
     };
     setPanels([...panels, newPanel]);
     setNextPanelId(nextPanelId + 1);

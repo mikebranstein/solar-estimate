@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, Polygon, Tooltip, Polyline, CircleMarker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, Polygon, Polyline, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
@@ -134,25 +134,10 @@ function DrawingControl({ onPolygonComplete, drawingMode }) {
       }
     };
 
-    // Handle polygon edits
-    const onDrawEdited = (e) => {
-      e.layers.eachLayer((layer) => {
-        const latlngs = layer.getLatLngs()[0];
-        const coordinates = latlngs.map(ll => ({ lat: ll.lat, lng: ll.lng }));
-        const azimuth = calculateRoofAzimuth(coordinates);
-        const area = calculatePolygonArea(coordinates);
-        const direction = getCardinalDirection(azimuth);
-
-        console.log('Polygon edited:', { azimuth, area, direction });
-      });
-    };
-
     map.on(L.Draw.Event.CREATED, onDrawCreated);
-    map.on(L.Draw.Event.EDITED, onDrawEdited);
 
     return () => {
       map.off(L.Draw.Event.CREATED, onDrawCreated);
-      map.off(L.Draw.Event.EDITED, onDrawEdited);
       
       if (drawControlRef.current) {
         map.removeControl(drawControlRef.current);
