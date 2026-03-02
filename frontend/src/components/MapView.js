@@ -274,6 +274,42 @@ function RoofSections({ sections, panels = [], location, editingRoofIndex = null
   );
 }
 
+// Component to render fitted solar panels on the map
+function SolarPanels({ panels = [] }) {
+  if (!panels || panels.length === 0) return null;
+
+  return (
+    <>
+      {panels.map((panel, panelIndex) => {
+        // Only render if this panel has a layout (fitted panels)
+        if (!panel.panelLayout || panel.panelLayout.length === 0) return null;
+
+        return (
+          <React.Fragment key={`panel-${panelIndex}`}>
+            {panel.panelLayout.map((solarPanel, solarPanelIndex) => {
+              // Each solar panel has 4 corners
+              const positions = solarPanel.corners.map(corner => [corner.lat, corner.lng]);
+
+              return (
+                <Polygon
+                  key={`panel-${panelIndex}-${solarPanelIndex}`}
+                  positions={positions}
+                  pathOptions={{
+                    color: '#1e3a8a',      // Dark blue border
+                    fillColor: '#2563eb',  // Blue fill
+                    fillOpacity: 0.6,
+                    weight: 1
+                  }}
+                />
+              );
+            })}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
+}
+
 function MapView({ 
   location, 
   roofData, 
@@ -323,6 +359,9 @@ function MapView({
         
         {/* Display existing roof sections */}
         <RoofSections sections={roofSections} panels={panels} location={location} editingRoofIndex={editingRoofIndex} />
+        
+        {/* Display fitted solar panels */}
+        <SolarPanels panels={panels} />
         
         {/* Edge selector for refining roof direction */}
         {editingRoofIndex !== null && roofSections[editingRoofIndex] && (

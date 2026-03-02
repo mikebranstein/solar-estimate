@@ -5,6 +5,7 @@ import RoofEditor from './components/RoofEditor';
 import EnergyChart from './components/EnergyChart';
 import PropertyManager from './components/PropertyManager';
 import api from './services/api';
+import { fitPanelsToRoof, PANEL_SPECS } from './utils/panelFitting';
 import { 
   createProperty, 
   getAllProperties, 
@@ -418,6 +419,29 @@ function App() {
     );
   };
 
+  const handleAutoFitPanels = (panelId, requestedPanelCount = null) => {
+    // Find the corresponding roof section
+    const panelIndex = panels.findIndex(p => p.id === panelId);
+    if (panelIndex === -1 || !roofSections[panelIndex]) {
+      console.error('No roof section found for this panel');
+      return;
+    }
+
+    const roofSection = roofSections[panelIndex];
+    
+    // Fit panels to the roof section
+    const result = fitPanelsToRoof(roofSection.coordinates, requestedPanelCount);
+    
+    // Update the panel with the layout and calculated kWp
+    handlePanelUpdate(panelId, {
+      panelLayout: result.panels,
+      panelCount: result.count,
+      kWp: result.kWp
+    });
+    
+    console.log(`Auto-fitted ${result.count} panels (${result.kWp} kWp) to roof section`);
+  };
+
   const handleCalculateEnergy = async () => {
     if (!location || panels.length === 0) return;
 
@@ -549,6 +573,7 @@ function App() {
               onRemovePanel={handleRemovePanel}
               onCalculate={handleCalculateEnergy}
               onEditRoofSection={handleEditRoofSection}
+              onAutoFitPanels={handleAutoFitPanels}
               location={location}
             />
           )}

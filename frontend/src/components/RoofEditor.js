@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { PANEL_SPECS, estimatePanelCount } from '../utils/panelFitting';
 
-function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalculate, onAddPanel, onRemovePanel, onEditRoofSection, location }) {
+function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalculate, onAddPanel, onRemovePanel, onEditRoofSection, onAutoFitPanels, location }) {
   // Determine hemisphere from location
   const hemisphere = location && location.lat >= 0 ? 'Northern' : 'Southern';
   const optimalDirection = hemisphere === 'Northern' ? 'South (180°)' : 'North (0°)';
@@ -8,6 +9,9 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
   // Track which panel name is being edited
   const [editingNameId, setEditingNameId] = useState(null);
   const [editingNameValue, setEditingNameValue] = useState('');
+  
+  // Track custom panel count input for each panel
+  const [customPanelCounts, setCustomPanelCounts] = useState({});
   
   const handleStartEditName = (panelId, currentName) => {
     setEditingNameId(panelId);
@@ -27,6 +31,20 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
   
   const handleFieldChange = (panelId, field, value) => {
     onPanelUpdate(panelId, { [field]: parseFloat(value) || 0 });
+  };
+
+  const handleAutoFit = (panelId, useCustomCount = false) => {
+    if (!onAutoFitPanels) return;
+    
+    const requestedCount = useCustomCount ? (parseInt(customPanelCounts[panelId]) || null) : null;
+    onAutoFitPanels(panelId, requestedCount);
+  };
+
+  const handleCustomPanelCountChange = (panelId, value) => {
+    setCustomPanelCounts(prev => ({
+      ...prev,
+      [panelId]: value
+    }));
   };
 
   return (
@@ -264,6 +282,113 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
                   <small style={{ color: '#666', fontSize: '0.8rem' }}>Optional</small>
                 </div>
               </div>
+
+              {/* Auto-fit Solar Panels Section */}
+              {roofSections[panelIndex] && onAutoFitPanels && (
+                <div style={{
+                  marginTop: '1rem',
+                  padding: '1rem',
+                  background: '#f0f7ff',
+                  borderRadius: '6px',
+                  border: '2px solid #667eea'
+                }}>
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <strong style={{ color: '#667eea', fontSize: '0.95rem' }}>⚡ Auto-Fit Solar Panels</strong>
+                    <p style={{ 
+                      margin: '0.5rem 0 0 0', 
+                      fontSize: '0.8rem', 
+                      color: '#666' 
+                    }}>
+                      Using standard {PANEL_SPECS.wattage}W panels ({PANEL_SPECS.width}m × {PANEL_SPECS.height}m)
+                      {panel.area > 0 && ` • Est. ${estimatePanelCount(panel.area)} panels fit`}
+                    </p>
+                  </div>
+                  
+                  {panel.panelCount > 0 && (
+                    <div style={{
+                      padding: '0.75rem',
+                      background: '#e8f5e9',
+                      borderRadius: '4px',
+                      marginBottom: '0.75rem',
+                      border: '1px solid #4caf50'
+                    }}>
+                      <div style={{ fontSize: '0.9rem', color: '#2e7d32' }}>
+                        <strong>✓ Fitted: {panel.panelCount} panels</strong>
+                        <div style={{ marginTop: '0.25rem', fontSize: '0.85rem' }}>
+                          Total Capacity: <strong>{panel.kWp?.toFixed(2)} kWp</strong> ({(panel.kWp * 1000).toFixed(0)}W)
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    <button
+                      onClick={() => handleAutoFit(panel.id, false)}
+                      style={{
+                        flex: 1,
+                        background: '#667eea',
+                        color: 'white',
+                        padding: '0.6rem',
+                        fontSize: '0.9rem',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Auto-Fit Max Panels
+                    </button>
+                  </div>
+                  
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '0.5rem', 
+                    alignItems: 'flex-end'
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: '0.25rem', 
+                        fontSize: '0.85rem',
+                        color: '#666'
+                      }}>
+                        Or specify panel count:
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="1000"
+                        value={customPanelCounts[panel.id] || ''}
+                        onChange={(e) => handleCustomPanelCountChange(panel.id, e.target.value)}
+                        placeholder="e.g., 10"
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                          fontSize: '0.9rem'
+                        }}
+                      />
+                    </div>
+                    <button
+                      onClick={() => handleAutoFit(panel.id, true)}
+                      disabled={!customPanelCounts[panel.id]}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        background: customPanelCounts[panel.id] ? '#28a745' : '#ccc',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: customPanelCounts[panel.id] ? 'pointer' : 'not-allowed',
+                        fontSize: '0.9rem',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Fit
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Edit Edges button - only show if this panel has a corresponding roof section */}
               {roofSections[panelIndex] && onEditRoofSection && (
