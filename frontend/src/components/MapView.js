@@ -171,6 +171,18 @@ function RoofSections({ sections, panels = [], location, editingRoofIndex = null
 
   // Determine hemisphere from location
   const hemisphere = location ? getHemisphere(location.lat) : 'northern';
+  
+  // Color palette for different roof sections
+  const sectionColors = [
+    '#667eea', // Purple
+    '#f56565', // Red
+    '#48bb78', // Green
+    '#ed8936', // Orange
+    '#4299e1', // Blue
+    '#9f7aea', // Violet
+    '#38b2ac', // Teal
+    '#ed64a6', // Pink
+  ];
 
   // Calculate label positions to avoid overlaps
   const calculateLabelOffset = (index, totalSections) => {
@@ -194,6 +206,9 @@ function RoofSections({ sections, panels = [], location, editingRoofIndex = null
         // Get efficiency rating based on hemisphere
         const efficiency = section.efficiency || getSolarEfficiency(section.azimuth, section.hemisphere || hemisphere);
         const color = efficiency.color;
+        
+        // Get unique color for this section's label
+        const accentColor = sectionColors[index % sectionColors.length];
         
         // Get panel name if available
         const panelName = panels[index]?.name || `Roof Section ${index + 1}`;
@@ -230,9 +245,9 @@ function RoofSections({ sections, panels = [], location, editingRoofIndex = null
                     [labelPosition.lat, labelPosition.lng]
                   ]}
                   pathOptions={{
-                    color: '#333',
+                    color: accentColor,
                     weight: 2,
-                    opacity: 0.7,
+                    opacity: 0.8,
                     dashArray: '5, 5'
                   }}
                 />
@@ -242,8 +257,8 @@ function RoofSections({ sections, panels = [], location, editingRoofIndex = null
                   center={[centroid.lat, centroid.lng]}
                   radius={4}
                   pathOptions={{
-                    color: '#333',
-                    fillColor: color,
+                    color: accentColor,
+                    fillColor: accentColor,
                     fillOpacity: 1,
                     weight: 2
                   }}
@@ -255,7 +270,7 @@ function RoofSections({ sections, panels = [], location, editingRoofIndex = null
                   icon={L.divIcon({
                     className: 'roof-label-marker',
                     html: `
-                      <div class="roof-label-content" style="border-left: 4px solid ${color};">
+                      <div class="roof-label-content" style="border-left: 4px solid ${accentColor};">
                         <div style="font-weight: bold; font-size: 12px; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis;">${panelName}</div>
                         <div style="font-size: 10px; white-space: nowrap;">${section.direction} • ${section.azimuth}°</div>
                         <div style="font-size: 10px; white-space: nowrap;">${section.area} m² • ${efficiency.rating.toUpperCase()}</div>
