@@ -255,14 +255,14 @@ function RoofSections({ sections, panels = [], location, editingRoofIndex = null
                   icon={L.divIcon({
                     className: 'roof-label-marker',
                     html: `
-                      <div class="roof-label-content" style="background-color: ${color}; border-color: ${color};">
-                        <div style="font-weight: bold; font-size: 13px; margin-bottom: 2px;">${panelName}</div>
-                        <div style="font-size: 11px;">${section.direction} • ${section.azimuth}°</div>
-                        <div style="font-size: 11px;">${section.area} m² • ${efficiency.rating.toUpperCase()}</div>
+                      <div class="roof-label-content" style="border-left: 4px solid ${color};">
+                        <div style="font-weight: bold; font-size: 12px; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis;">${panelName}</div>
+                        <div style="font-size: 10px; white-space: nowrap;">${section.direction} • ${section.azimuth}°</div>
+                        <div style="font-size: 10px; white-space: nowrap;">${section.area} m² • ${efficiency.rating.toUpperCase()}</div>
                       </div>
                     `,
-                    iconSize: [120, 60],
-                    iconAnchor: [60, 30]
+                    iconSize: [140, 70],
+                    iconAnchor: [70, 35]
                   })}
                 />
               </>
