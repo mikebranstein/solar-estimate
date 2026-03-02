@@ -185,9 +185,6 @@ export function fitPanelsToRoof(coordinates, requestedPanelCount = null) {
     return { panels: [], count: 0, kWp: 0 };
   }
   
-  // Calculate bounding box
-  const bbox = calculateBoundingBox(points);
-  
   // Find primary orientation of the roof
   const primaryAngle = findPrimaryOrientation(points);
   

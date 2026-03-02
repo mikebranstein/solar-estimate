@@ -5,7 +5,7 @@ import RoofEditor from './components/RoofEditor';
 import EnergyChart from './components/EnergyChart';
 import PropertyManager from './components/PropertyManager';
 import api from './services/api';
-import { fitPanelsToRoof, PANEL_SPECS } from './utils/panelFitting';
+import { fitPanelsToRoof } from './utils/panelFitting';
 import { 
   createProperty, 
   getAllProperties, 
