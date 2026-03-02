@@ -166,7 +166,7 @@ function DrawingControl({ onPolygonComplete, drawingMode }) {
 }
 
 // Component to display roof sections with labels
-function RoofSections({ sections, location }) {
+function RoofSections({ sections, panels = [], location }) {
   if (!sections || sections.length === 0) return null;
 
   // Determine hemisphere from location
@@ -181,6 +181,9 @@ function RoofSections({ sections, location }) {
         // Get efficiency rating based on hemisphere
         const efficiency = section.efficiency || getSolarEfficiency(section.azimuth, section.hemisphere || hemisphere);
         const color = efficiency.color;
+        
+        // Get panel name if available
+        const panelName = panels[index]?.name || `Roof Section ${index + 1}`;
 
         return (
           <Polygon
@@ -196,7 +199,8 @@ function RoofSections({ sections, location }) {
             {centroid && (
               <Tooltip permanent direction="center" className="roof-label">
                 <div style={{ textAlign: 'center', fontWeight: 'bold' }}>
-                  <div>{section.direction}</div>
+                  <div>{panelName}</div>
+                  <div style={{ fontSize: '0.8em', marginTop: '2px' }}>{section.direction}</div>
                   <div style={{ fontSize: '0.85em' }}>{section.azimuth}°</div>
                   <div style={{ fontSize: '0.85em' }}>{section.area} m²</div>
                   <div style={{ fontSize: '0.75em', marginTop: '2px', opacity: 0.9 }}>
@@ -222,6 +226,7 @@ function MapView({
   drawingMode = false,
   onPolygonComplete,
   roofSections = [],
+  panels = [],
   editingRoofIndex = null,
   onEdgeSelectionComplete,
   onCancelEdgeSelection
@@ -259,7 +264,7 @@ function MapView({
         )}
         
         {/* Display existing roof sections */}
-        <RoofSections sections={roofSections} location={location} />
+        <RoofSections sections={roofSections} panels={panels} location={location} />
         
         {/* Edge selector for refining roof direction */}
         {editingRoofIndex !== null && roofSections[editingRoofIndex] && (

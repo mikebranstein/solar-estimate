@@ -234,6 +234,7 @@ function App() {
     
     const newPanel = {
       id: nextPanelId,
+      name: `Roof Section ${nextPanelId + 1}`,
       kWp: 0,
       azimuth: defaultAzimuth,
       pitch: 20, // Default: 20° pitch
@@ -251,6 +252,7 @@ function App() {
     // Automatically create a panel with the calculated values
     const newPanel = {
       id: nextPanelId,
+      name: `Roof Section ${nextPanelId + 1}`,
       kWp: 0, // User will set this
       azimuth: sectionData.azimuth,
       pitch: 20, // Default pitch, user can adjust
@@ -442,6 +444,7 @@ function App() {
             drawingMode={drawingMode}
             onPolygonComplete={handlePolygonComplete}
             roofSections={roofSections}
+            panels={panels}
             editingRoofIndex={editingRoofIndex}
             onEdgeSelectionComplete={handleEdgeSelectionComplete}
             onCancelEdgeSelection={handleCancelEdgeSelection}

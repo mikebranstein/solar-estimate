@@ -80,20 +80,36 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
           panels.map(panel => (
             <div key={panel.id} className="panel-item">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
                   <input
                     type="checkbox"
                     checked={panel.enabled}
                     onChange={() => handleTogglePanel(panel.id)}
                   />
-                  <h4 style={{ margin: 0 }}>Roof Surface {panel.id + 1}</h4>
+                  <input
+                    type="text"
+                    value={panel.name || `Roof Surface ${panel.id + 1}`}
+                    onChange={(e) => onPanelUpdate(panel.id, { name: e.target.value })}
+                    disabled={!panel.enabled}
+                    style={{
+                      flex: 1,
+                      padding: '0.35rem 0.5rem',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '0.95rem',
+                      fontWeight: '500',
+                      margin: 0
+                    }}
+                    placeholder="Enter roof section name"
+                  />
                 </div>
                 <button
                   onClick={() => onRemovePanel(panel.id)}
                   style={{
                     background: '#dc3545',
                     padding: '0.25rem 0.75rem',
-                    fontSize: '0.85rem'
+                    fontSize: '0.85rem',
+                    marginLeft: '0.5rem'
                   }}
                 >
                   Remove
