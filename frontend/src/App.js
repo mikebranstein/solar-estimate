@@ -3,9 +3,25 @@ import AddressSearch from './components/AddressSearch';
 import MapView from './components/MapView';
 import RoofEditor from './components/RoofEditor';
 import EnergyChart from './components/EnergyChart';
+import PropertyManager from './components/PropertyManager';
 import api from './services/api';
+import { 
+  createProperty, 
+  getAllProperties, 
+  saveProperty, 
+  deleteProperty, 
+  getPropertyById,
+  setActivePropertyId,
+  getActivePropertyId,
+  clearActiveProperty
+} from './utils/propertyStorage';
 
 function App() {
+  // Property Management State
+  const [properties, setProperties] = useState([]);
+  const [activeProperty, setActiveProperty] = useState(null);
+  
+  // Current Property State
   const [location, setLocation] = useState(null);
   const [roofData, setRoofData] = useState(null);
   const [panels, setPanels] = useState([]);
@@ -18,29 +34,20 @@ function App() {
   const [drawingMode, setDrawingMode] = useState(false);
   const [roofSections, setRoofSections] = useState([]);
 
-  // Load saved location and zoom from localStorage, or use geolocation
+  // Load properties and active property on mount
   useEffect(() => {
-    const savedData = localStorage.getItem('solarEstimatorLastView');
+    const loadedProperties = getAllProperties();
+    setProperties(loadedProperties);
     
-    if (savedData) {
-      try {
-        const { location: savedLocation, zoom: savedZoom, roofData: savedRoofData } = JSON.parse(savedData);
-        if (savedLocation && savedLocation.lat && savedLocation.lng) {
-          // Restore the selected location, zoom, and roof data
-          setLocation(savedLocation);
-          setZoom(savedZoom || 12);
-          if (savedRoofData) {
-            setRoofData(savedRoofData);
-          }
-          console.log('Restored last viewed location and zoom level');
-          return; // Skip geolocation if we have saved location
-        }
-      } catch (e) {
-        console.log('Failed to parse saved location data');
+    const activeId = getActivePropertyId();
+    if (activeId) {
+      const active = getPropertyById(activeId);
+      if (active) {
+        loadPropertyData(active);
       }
     }
     
-    // No saved location, try geolocation
+    // Get user's geolocation for new properties
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -59,31 +66,95 @@ function App() {
         }
       );
     } else {
-      // Geolocation not supported, use Auckland
       setUserLocation({ lat: -36.8485, lng: 174.7633 });
     }
   }, []);
 
-  // Save location, zoom, and roofData to localStorage whenever they change
+  // Auto-save active property whenever data changes
   useEffect(() => {
-    if (location) {
-      const dataToSave = {
-        location: { 
-          lat: location.lat, 
-          lng: location.lng,
-          formattedAddress: location.formattedAddress 
-        },
-        zoom: zoom,
-        roofData: roofData ? {
-          formattedAddress: roofData.formattedAddress,
-          lat: roofData.lat,
-          lng: roofData.lng
-        } : null
+    if (activeProperty && location) {
+      const updatedProperty = {
+        ...activeProperty,
+        location,
+        roofSections,
+        panels,
+        energyData,
+        zoom,
+        nextPanelId
       };
-      localStorage.setItem('solarEstimatorLastView', JSON.stringify(dataToSave));
-      console.log('Saved location and zoom to localStorage');
+      saveProperty(updatedProperty);
+      
+      // Update in properties list
+      setProperties(prev => 
+        prev.map(p => p.id === updatedProperty.id ? updatedProperty : p)
+      );
     }
-  }, [location, zoom, roofData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location, roofSections, panels, energyData, zoom, nextPanelId]);
+
+  // Load property data into state
+  const loadPropertyData = (property) => {
+    setActiveProperty(property);
+    setActivePropertyId(property.id);
+    setLocation(property.location || null);
+    setRoofData(property.location ? {
+      location: property.location,
+      formattedAddress: property.location.formattedAddress,
+      roofSegments: [],
+      message: 'Property loaded. Use the map to view your roof.'
+    } : null);
+    setRoofSections(property.roofSections || []);
+    setPanels(property.panels || []);
+    setEnergyData(property.energyData || null);
+    setZoom(property.zoom || 21);
+    setNextPanelId(property.nextPanelId || 0);
+    setDrawingMode(false);
+    setError(null);
+  };
+
+  // Property Management Functions
+  const handleCreateProperty = (name) => {
+    const newProperty = createProperty(name, location || null);
+    const saved = saveProperty(newProperty);
+    setProperties([...properties, saved]);
+    loadPropertyData(saved);
+  };
+
+  const handleSelectProperty = (propertyId) => {
+    const property = getPropertyById(propertyId);
+    if (property) {
+      loadPropertyData(property);
+    }
+  };
+
+  const handleDeleteProperty = (propertyId) => {
+    deleteProperty(propertyId);
+    setProperties(properties.filter(p => p.id !== propertyId));
+    
+    if (activeProperty?.id === propertyId) {
+      // Clear current property
+      setActiveProperty(null);
+      clearActiveProperty();
+      setLocation(null);
+      setRoofData(null);
+      setRoofSections([]);
+      setPanels([]);
+      setEnergyData(null);
+      setNextPanelId(0);
+    }
+  };
+
+  const handleRenameProperty = (propertyId, newName) => {
+    const property = getPropertyById(propertyId);
+    if (property) {
+      const updated = { ...property, name: newName };
+      saveProperty(updated);
+      setProperties(properties.map(p => p.id === propertyId ? updated : p));
+      if (activeProperty?.id === propertyId) {
+        setActiveProperty(updated);
+      }
+    }
+  };
 
   const handleAddressSelect = async (address) => {
     setLoading(true);
@@ -98,10 +169,19 @@ function App() {
       const roofResult = await api.detectRoof(address, geocodeResult.lat, geocodeResult.lng);
       setRoofData(roofResult);
 
-      // Reset panels when new location is selected
-      setPanels([]);
-      setNextPanelId(0);
-      setEnergyData(null);
+      // If no active property, suggest creating one
+      if (!activeProperty) {
+        const propertyName = geocodeResult.formattedAddress.split(',')[0] || 'New Property';
+        if (window.confirm(`Create a new property for "${propertyName}"? This will save your roof sections and panel configurations.`)) {
+          handleCreateProperty(propertyName);
+        }
+      } else {
+        // Clear roof sections and panels for new location in existing property
+        setRoofSections([]);
+        setPanels([]);
+        setNextPanelId(0);
+        setEnergyData(null);
+      }
     } catch (err) {
       setError(err.message || 'Failed to process address');
       console.error(err);
@@ -134,10 +214,18 @@ function App() {
         formattedAddress: locationData.formattedAddress
       });
 
-      // Reset panels when new location is selected
-      setPanels([]);
-      setNextPanelId(0);
-      setEnergyData(null);
+      // If no active property, suggest creating one
+      if (!activeProperty) {
+        if (window.confirm(`Create a new property for this location? This will save your roof sections and panel configurations.`)) {
+          handleCreateProperty('Location Property');
+        }
+      } else {
+        // Clear roof sections and panels for new location in existing property
+        setRoofSections([]);
+        setPanels([]);
+        setNextPanelId(0);
+        setEnergyData(null);
+      }
     } catch (err) {
       setError(err.message || 'Failed to process location');
       console.error(err);
@@ -228,6 +316,15 @@ function App() {
         <h1>☀️ Solar Energy Estimator</h1>
         <p>Estimate your solar panel energy generation - No API keys required! {userLocation && '📍 Using your current location'}</p>
       </header>
+
+      <PropertyManager
+        properties={properties}
+        activeProperty={activeProperty}
+        onSelectProperty={handleSelectProperty}
+        onCreateProperty={handleCreateProperty}
+        onDeleteProperty={handleDeleteProperty}
+        onRenameProperty={handleRenameProperty}
+      />
 
       <div className="main-content">
         <div className="sidebar">
