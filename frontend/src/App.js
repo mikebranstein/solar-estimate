@@ -229,8 +229,9 @@ function App() {
 
       try {
         // Let user choose where to save the file
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '-').split('.')[0];
         const handle = await window.showSaveFilePicker({
-          suggestedName: 'solar-properties-autosave.json',
+          suggestedName: `solar-properties-${timestamp}.json`,
           types: [{
             description: 'JSON Files',
             accept: { 'application/json': ['.json'] }

@@ -59,7 +59,8 @@ function PropertyManager({
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `solar-properties-${new Date().toISOString().split('T')[0]}.json`;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '-').split('.')[0];
+      link.download = `solar-properties-${timestamp}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
