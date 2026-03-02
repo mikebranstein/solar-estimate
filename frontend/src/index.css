@@ -274,9 +274,22 @@ input:focus, select:focus {
   transition: all 0.2s;
 }
 
+.property-item.clickable {
+  cursor: pointer;
+}
+
+.property-item.clickable .property-details {
+  cursor: pointer;
+}
+
 .property-item:hover {
   border-color: #667eea;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.property-item.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
 }
 
 .property-item.active {
@@ -287,22 +300,24 @@ input:focus, select:focus {
 .property-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 0.75rem;
+}
+
+.property-title {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .property-header h4 {
   margin: 0;
   font-size: 1.1rem;
   color: #333;
-  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.property-header h4:hover {
-  color: #667eea;
 }
 
 .active-badge {
@@ -393,6 +408,27 @@ input:focus, select:focus {
 
 .btn-load-property:hover {
   background: #5568d3;
+}
+
+.btn-select-property {
+  padding: 0.4rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-select-property:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.5);
+  background: linear-gradient(135deg, #5568d3 0%, #6543a5 100%);
 }
 
 /* Modal Styles */

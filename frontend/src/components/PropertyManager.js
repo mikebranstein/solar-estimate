@@ -95,7 +95,7 @@ function PropertyManager({
                 return (
                   <div
                     key={property.id}
-                    className={`property-item ${isActive ? 'active' : ''}`}
+                    className={`property-item ${isActive ? 'active' : ''} ${!isActive && !isEditing ? 'clickable' : ''}`}
                   >
                     <div className="property-header">
                       {isEditing ? (
@@ -128,20 +128,37 @@ function PropertyManager({
                         </div>
                       ) : (
                         <>
-                          <h4 onClick={() => !isActive && onSelectProperty(property.id)}>
-                            {property.name}
-                            {isActive && <span className="active-badge">Current</span>}
-                          </h4>
+                          <div className="property-title">
+                            <h4>
+                              {property.name}
+                              {isActive && <span className="active-badge">Current</span>}
+                            </h4>
+                            {!isActive && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onSelectProperty(property.id);
+                                }}
+                                className="btn-select-property"
+                              >
+                                ⚡ Load Property
+                              </button>
+                            )}
+                          </div>
                           <div className="property-actions">
                             <button
-                              onClick={() => startRename(property)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startRename(property);
+                              }}
                               className="btn-icon"
                               title="Rename"
                             >
                               ✎
                             </button>
                             <button
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 if (window.confirm(`Delete "${property.name}"? This cannot be undone.`)) {
                                   onDeleteProperty(property.id);
                                 }
@@ -157,7 +174,10 @@ function PropertyManager({
                     </div>
                     
                     {!isEditing && (
-                      <div className="property-details">
+                      <div 
+                        className="property-details"
+                        onClick={() => !isActive && onSelectProperty(property.id)}
+                      >
                         <div className="detail-row">
                           <span className="detail-label">📍 Location:</span>
                           <span className="detail-value">{summary.address}</span>
@@ -178,14 +198,6 @@ function PropertyManager({
                           <span className="detail-label">🕐 Last Updated:</span>
                           <span className="detail-value">{formatDate(summary.lastUpdated)}</span>
                         </div>
-                        {!isActive && (
-                          <button
-                            onClick={() => onSelectProperty(property.id)}
-                            className="btn-load-property"
-                          >
-                            Load This Property
-                          </button>
-                        )}
                       </div>
                     )}
                   </div>
