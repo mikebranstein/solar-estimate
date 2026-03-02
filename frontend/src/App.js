@@ -328,15 +328,15 @@ function App() {
       // Get irradiance data from NREL
       const irradianceResult = await api.getSolarIrradiance(location.lat, location.lng);
 
-      // Calculate energy production with enabled panels only
-      const enabledPanels = panels.filter(p => p.enabled && p.kWp > 0);
-      if (enabledPanels.length === 0) {
-        setError('Please enable at least one panel with capacity > 0 kWp');
+      // Calculate energy production with panels that have capacity
+      const validPanels = panels.filter(p => p.kWp > 0);
+      if (validPanels.length === 0) {
+        setError('Please add at least one panel with capacity > 0 kWp');
         setLoading(false);
         return;
       }
 
-      const energyResult = await api.calculateEnergy(enabledPanels, irradianceResult, 'monthly');
+      const energyResult = await api.calculateEnergy(validPanels, irradianceResult, 'monthly');
       setEnergyData(energyResult);
     } catch (err) {
       setError(err.message || 'Failed to calculate energy production');

@@ -168,7 +168,7 @@ export function getPropertySummary(property) {
     roofSectionCount: property.roofSections?.length || 0,
     panelCount: property.panels?.length || 0,
     totalArea: property.roofSections?.reduce((sum, section) => sum + (section.area || 0), 0) || 0,
-    totalCapacity: property.panels?.reduce((sum, panel) => sum + (panel.enabled ? panel.kWp : 0), 0) || 0,
+    totalCapacity: property.panels?.reduce((sum, panel) => sum + (panel.kWp || 0), 0) || 0,
     lastUpdated: property.updatedAt
   };
 }

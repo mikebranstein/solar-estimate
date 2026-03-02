@@ -5,11 +5,6 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
   const hemisphere = location && location.lat >= 0 ? 'Northern' : 'Southern';
   const optimalDirection = hemisphere === 'Northern' ? 'South (180°)' : 'North (0°)';
   
-  const handleTogglePanel = (panelId) => {
-    const panel = panels.find(p => p.id === panelId);
-    onPanelUpdate(panelId, { enabled: !panel.enabled });
-  };
-
   const handleFieldChange = (panelId, field, value) => {
     onPanelUpdate(panelId, { [field]: parseFloat(value) || 0 });
   };
@@ -79,25 +74,21 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
         ) : (
           panels.map(panel => (
             <div key={panel.id} className="panel-item">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
-                  <input
-                    type="checkbox"
-                    checked={panel.enabled}
-                    onChange={() => handleTogglePanel(panel.id)}
-                  />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontWeight: '600', fontSize: '1rem', margin: 0, color: '#333', display: 'block', marginBottom: '0.5rem' }}>
+                    {panel.name || `Roof Surface ${panel.id + 1}`}
+                  </label>
                   <input
                     type="text"
                     value={panel.name || `Roof Surface ${panel.id + 1}`}
                     onChange={(e) => onPanelUpdate(panel.id, { name: e.target.value })}
-                    disabled={!panel.enabled}
                     style={{
-                      flex: 1,
-                      padding: '0.35rem 0.5rem',
+                      width: '100%',
+                      padding: '0.5rem',
                       border: '1px solid #ddd',
                       borderRadius: '4px',
-                      fontSize: '0.95rem',
-                      fontWeight: '500',
+                      fontSize: '0.9rem',
                       margin: 0
                     }}
                     placeholder="Enter roof section name"
@@ -107,9 +98,9 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
                   onClick={() => onRemovePanel(panel.id)}
                   style={{
                     background: '#dc3545',
-                    padding: '0.25rem 0.75rem',
+                    padding: '0.5rem 0.75rem',
                     fontSize: '0.85rem',
-                    marginLeft: '0.5rem'
+                    marginLeft: '0.75rem'
                   }}
                 >
                   Remove
@@ -127,7 +118,6 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
                     min="0"
                     value={panel.kWp}
                     onChange={(e) => handleFieldChange(panel.id, 'kWp', e.target.value)}
-                    disabled={!panel.enabled}
                     style={{ margin: 0 }}
                     placeholder="e.g., 5.0"
                   />
@@ -145,7 +135,6 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
                     max="360"
                     value={panel.azimuth}
                     onChange={(e) => handleFieldChange(panel.id, 'azimuth', e.target.value)}
-                    disabled={!panel.enabled}
                     style={{ margin: 0 }}
                     placeholder="180"
                   />
@@ -163,7 +152,6 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
                     max="90"
                     value={panel.pitch}
                     onChange={(e) => handleFieldChange(panel.id, 'pitch', e.target.value)}
-                    disabled={!panel.enabled}
                     style={{ margin: 0 }}
                     placeholder="20"
                   />
@@ -180,7 +168,6 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
                     min="0"
                     value={panel.area}
                     onChange={(e) => handleFieldChange(panel.id, 'area', e.target.value)}
-                    disabled={!panel.enabled}
                     style={{ margin: 0 }}
                     placeholder="30"
                   />
@@ -199,7 +186,6 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
                     padding: '0.5rem',
                     fontSize: '0.9rem'
                   }}
-                  disabled={!panel.enabled}
                 >
                   ✏️ Edit Roof Edges (Refine Direction)
                 </button>
@@ -212,7 +198,7 @@ function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalc
       <button
         onClick={onCalculate}
         style={{ width: '100%', marginTop: '1rem' }}
-        disabled={panels.filter(p => p.enabled && p.kWp > 0).length === 0}
+        disabled={panels.filter(p => p.kWp > 0).length === 0}
       >
         Calculate Energy Production
       </button>
