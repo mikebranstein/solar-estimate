@@ -377,6 +377,33 @@ function App() {
           {!(activeProperty && location) && (
             <AddressSearch onAddressSelect={handleAddressSelect} />
           )}
+          
+          {/* Show change location button when location is set */}
+          {location && activeProperty && (
+            <div style={{ marginBottom: '1rem' }}>
+              <button
+                onClick={() => {
+                  setLocation(null);
+                  setRoofData(null);
+                  setRoofSections([]);
+                  setPanels([]);
+                  setEnergyData(null);
+                  setNextPanelId(0);
+                }}
+                style={{
+                  width: '100%',
+                  background: '#6c757d',
+                  padding: '0.75rem',
+                  fontSize: '0.9rem'
+                }}
+              >
+                📍 Change Property Location
+              </button>
+              <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem', marginBottom: 0 }}>
+                {location.formattedAddress}
+              </p>
+            </div>
+          )}
 
           {loading && (
             <div className="loading">
@@ -446,7 +473,7 @@ function App() {
           <MapView 
             location={location} 
             roofData={roofData} 
-            onLocationSelect={handleMapClick}
+            onLocationSelect={!location ? handleMapClick : null}
             userLocation={userLocation}
             zoom={zoom}
             onZoomChange={handleZoomChange}

@@ -405,10 +405,12 @@ function MapView({
           )
         ) : location ? (
           <span>
-            💡 View your roof from satellite imagery ({getHemisphere(location.lat) === 'northern' ? 'Northern' : 'Southern'} Hemisphere), then configure panels below
+            💡 View your roof from satellite imagery ({getHemisphere(location.lat) === 'northern' ? 'Northern' : 'Southern'} Hemisphere)
           </span>
-        ) : (
+        ) : onLocationSelect ? (
           <span>🗺️ {userLocation ? 'Showing your current location - ' : ''}Click on the map to select a location or search by address above</span>
+        ) : (
+          <span>🗺️ Map view - Use "Change Property Location" button above to select a new location</span>
         )}
       </div>
     </div>
