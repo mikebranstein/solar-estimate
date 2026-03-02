@@ -15,6 +15,8 @@ function App() {
   const [nextPanelId, setNextPanelId] = useState(0);
   const [userLocation, setUserLocation] = useState(null);
   const [zoom, setZoom] = useState(12);
+  const [drawingMode, setDrawingMode] = useState(false);
+  const [roofSections, setRoofSections] = useState([]);
 
   // Load saved location and zoom from localStorage, or use geolocation
   useEffect(() => {
@@ -145,16 +147,39 @@ function App() {
   };
 
   const handleAddPanel = () => {
+    // Use hemisphere-aware default azimuth
+    const defaultAzimuth = location && location.lat < 0 ? 0 : 180; // North for Southern, South for Northern
+    
     const newPanel = {
       id: nextPanelId,
       kWp: 0,
-      azimuth: 180, // Default: South-facing
+      azimuth: defaultAzimuth,
       pitch: 20, // Default: 20° pitch
       area: 0,
       enabled: true
     };
     setPanels([...panels, newPanel]);
     setNextPanelId(nextPanelId + 1);
+  };
+
+  const handlePolygonComplete = (sectionData) => {
+    // Add the roof section to the list
+    setRoofSections([...roofSections, sectionData]);
+    
+    // Automatically create a panel with the calculated values
+    const newPanel = {
+      id: nextPanelId,
+      kWp: 0, // User will set this
+      azimuth: sectionData.azimuth,
+      pitch: 20, // Default pitch, user can adjust
+      area: sectionData.area,
+      enabled: true
+    };
+    setPanels([...panels, newPanel]);
+    setNextPanelId(nextPanelId + 1);
+    
+    // Show success message
+    console.log(`Created roof section facing ${sectionData.direction} (${sectionData.azimuth}°) with area ${sectionData.area} m²`);
   };
 
   const handleRemovePanel = (panelId) => {
@@ -200,10 +225,40 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>☀️ Solar Energy Estimator</h1>
+        <h1location && (
+            <div style={{ marginBottom: '1rem', padding: '1rem', background: '#f8f9fa', borderRadius: '4px' }}>
+              <button
+                onClick={() => setDrawingMode(!drawingMode)}
+                style={{
+                  width: '100%',
+                  background: drawingMode ? '#dc3545' : '#007bff',
+                  color: 'white',
+                  padding: '0.75rem',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: '500'
+                }}
+              >
+                {drawingMode ? '✓ Done Drawing' : '✏️ Draw Roof Sections'}
+              </button>
+              <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem', marginBottom: 0 }}>
+                {drawingMode 
+                  ? 'Click the polygon tool on the map to draw roof outlines. Direction will be calculated automatically!'
+                  : 'Draw the outline of each roof section to automatically calculate its direction and area'
+                }
+              </p>
+            </div>
+          )}
+
+          {>☀️ Solar Energy Estimator</h1>
         <p>Estimate your solar panel energy generation - No API keys required! {userLocation && '📍 Using your current location'}</p>
       </header>
-
+  drawingMode={drawingMode}
+            onPolygonComplete={handlePolygonComplete}
+            roofSections={roofSections}
+          
       <div className="main-content">
         <div className="sidebar">
           <AddressSearch onAddressSelect={handleAddressSelect} />
@@ -228,6 +283,7 @@ function App() {
               onAddPanel={handleAddPanel}
               onRemovePanel={handleRemovePanel}
               onCalculate={handleCalculateEnergy}
+              location={location}
             />
           )}
 

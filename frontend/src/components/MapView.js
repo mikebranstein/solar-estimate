@@ -1,7 +1,10 @@
 import React from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, Polygon, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
+import 'leaflet-draw';
+import { calculateRoofAzimuth, calculatePolygonArea, getCardinalDirection, calculateCentroid, getHemisphere, getSolarEfficiency, getOptimalAzimuth } from '../utils/roofCalculations';
 
 // Fix for default marker icon issue with Leaflet in React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -58,7 +61,177 @@ function ZoomHandler({ onZoomChange }) {
   return null;
 }
 
-function MapView({ location, roofData, onLocationSelect, userLocation, zoom, onZoomChange }) {
+// Component to han
+  location, 
+  roofData, 
+  onLocationSelect, 
+  userLocation, 
+  zoom, 
+  onZoomChange,
+  drawingMode = false,
+  onPolygonComplete,
+  roofSections = []
+
+function DrawingControl({ onPolygonComplete, drawingMode }) {
+  const map = useMap();
+  const drawControlRef = React.useRef(null);
+  const drawnItemsRef = React.useRef(new L.FeatureGroup());
+
+  React.useEffect(() => {
+    // Add the drawn items layer to the map
+    map.addLayer(drawnItemsRef.current);
+
+    // Initialize drawing control
+    const drawControl = new L.Control.Draw({
+      position: 'topright',
+      draw: {
+        polygon: drawingMode ? {
+          allowIntersection: false,
+          showArea: true,
+          shapeOptions: {
+            color: '#3388ff',
+            fillOpacity: 0.3,
+            weight: 3
+          }
+        } : false,
+        polyline: false,
+        rectangle: false,
+        circle: false,
+        marker: false,
+        circlemarker: false
+      },
+      edit: {
+        featureGroup: drawnItemsRef.current,
+        remove: true,
+        edit: true
+      }
+    });
+
+    if (drawingMode) {
+      map.addControl(drawControl);
+      drawControlRef.current = drawControl;
+    }
+
+    // Handle polygon creation
+    const onDrawCreated = (e) => {
+      const layer = e.layer;
+      drawnItemsRef.current.addLayer(layer);
+
+      // Extract coordinates from the polygon
+      const latlngs = layer.getLatLngs()[0];
+      const coordinates = latlngs.map(ll => ({ lat: ll.lat, lng: ll.lng }));
+
+      // Calculate roof properties with hemisphere awareness
+      const latitude = coordinates[0].lat;
+      const hemisphere = getHemisphere(latitude);
+      const azimuth = calculateRoofAzimuth(coordinates, latitude);
+      const area = calculatePolygonArea(coordinates);
+      const direction = getCardinalDirection(azimuth);
+      const efficiency = getSolarEfficiency(azimuth, hemisphere);
+
+      // Pass the data to parent component
+      if (onPolygonComplete) {
+        onPolygonComplete({
+          coordinates,
+          azimuth,
+          area,
+          direction,
+          hemisphere,
+          efficiency
+        });
+      }
+    };
+
+    // Handle polygon edits
+    const onDrawEdited = (e) => {
+      e.layers.eachLayer((layer) => {
+        const latlngs = layer.getLatLngs()[0];
+        const coordinates = latlngs.map(ll => ({ lat: ll.lat, lng: ll.lng }));
+        const azimuth = calculateRoofAzimuth(coordinates);
+        const area = calculatePolygonArea(coordinates);
+        const direction = getCardinalDirection(azimuth);
+
+        console.log('Polygon edited:', { azimuth, area, direction });
+      });
+    };
+
+    map.on(L.Draw.Event.CREATED, onDrawCreated);
+    map.on(L.Draw.Event.EDITED, onDrawEdited);
+
+    return () => {
+      map.off(L.Draw.Event.CREATED, onDrawCreated);
+      map.off(L.Draw.Event.EDITED, onDrawEdited);
+      
+      if (drawControlRef.current) {
+        map.removeControl(drawControlRef.current);
+      }
+      
+      map.removeLayer(drawnItemsRef.current);
+    };
+  }, [map, onPolygonComplete, drawingMode]);
+
+  return null;
+}
+
+// Component to display roof sections with labels
+function RoofSections({ sections, location }) {
+  if (!sections || sections.length === 0) return null;
+
+  // Determine hemisphere from location
+  const hemisphere = location ? getHemisphere(location.lat) : 'northern';
+  const optimalDirection = hemisphere === 'northern' ? 'South' : 'North';
+
+  return (
+    <>
+      {sections.map((section, index) => {
+        const positions = section.coordinates.map(c => [c.lat, c.lng]);
+        const centroid = calculateCentroid(section.coordinates);
+        
+        // Get efficiency rating based on hemisphere
+        const efficiency = section.efficiency || getSolarEfficiency(section.azimuth, section.hemisphere || hemisphere);
+        const color = efficiency.color;
+
+        return (
+          <Polygon
+            key={index}
+            positions={positions}
+            pathOptions={{
+              color: color,
+              fillColor: color,
+              fillOpacity: 0.3,
+              weight: 3
+            }}
+          >
+            {centroid && (
+              <Tooltip permanent direction="center" className="roof-label">
+                <div style={{ textAlign: 'center', fontWeight: 'bold' }}>
+                  <div>{section.direction}</div>
+                  <div style={{ fontSize: '0.85em' }}>{section.azimuth}°</div>
+                  <div style={{ fontSize: '0.85em' }}>{section.area} m²</div>
+                  <div style={{ fontSize: '0.75em', marginTop: '2px', opacity: 0.9 }}>
+                    {efficiency.rating.toUpperCase()}
+                  </div>
+                </div>
+              </Tooltip>
+            )}
+          </Polygon>
+        );
+      })}
+    </>
+  );
+}
+
+function MapView({ 
+  location, 
+  roofData, 
+  onLocationSelect, 
+  userLocation, 
+  zoom, 
+  onZoomChange,
+  drawingMode = false,
+  onPolygonComplete,
+  roofSections = []
+}) {
   const defaultCenter = userLocation 
     ? [userLocation.lat, userLocation.lng] 
     : [-36.8485, 174.7633]; // Auckland, New Zealand fallback
@@ -81,7 +254,18 @@ function MapView({ location, roofData, onLocationSelect, userLocation, zoom, onZ
         {onZoomChange && <ZoomHandler onZoomChange={onZoomChange} />}
         
         {/* Click handler for manual location selection */}
-        {onLocationSelect && <LocationMarker onLocationSelect={onLocationSelect} />}
+        {onLocationSelect && !drawingMode && <LocationMarker onLocationSelect={onLocationSelect} />}
+        
+        {/* Drawing tools for roof sections */}
+        {drawingMode && onPolygonComplete && (
+          <DrawingControl 
+            onPolygonComplete={onPolygonComplete}
+            drawingMode={drawingMode}
+          />
+        )}
+        
+        {/* Display existing roof sections */}
+        <RoofSections sections={roofSections} location={location} />
         
         {/* Satellite Imagery Tile Layer */}
         <TileLayer
@@ -122,8 +306,21 @@ function MapView({ location, roofData, onLocationSelect, userLocation, zoom, onZ
         maxWidth: '90%',
         textAlign: 'center'
       }}>
-        {location ? (
-          <span>💡 View your roof from satellite imagery, then configure panels below</span>
+        {drawingMode ? (
+          location ? (
+            <span>
+              ✏️ Click the polygon tool on the right to draw roof sections. 
+              {getHemisphere(location.lat) === 'northern' 
+                ? ' 🔷 South-facing roofs will be highlighted in green.' 
+                : ' 🔶 North-facing roofs will be highlighted in green.'}
+            </span>
+          ) : (
+            <span>✏️ Click the polygon tool on the right to draw roof sections. The direction will be calculated automatically!</span>
+          )
+        ) : location ? (
+          <span>
+            💡 View your roof from satellite imagery ({getHemisphere(location.lat) === 'northern' ? 'Northern' : 'Southern'} Hemisphere), then configure panels below
+          </span>
         ) : (
           <span>🗺️ {userLocation ? 'Showing your current location - ' : ''}Click on the map to select a location or search by address above</span>
         )}

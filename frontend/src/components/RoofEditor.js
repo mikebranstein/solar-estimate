@@ -1,6 +1,10 @@
 import React from 'react';
 
-function RoofEditor({ roofData, panels, onPanelUpdate, onCalculate, onAddPanel, onRemovePanel }) {
+function RoofEditor({ roofData, panels, onPanelUpdate, onCalculate, onAddPanel, onRemovePanel, location }) {
+  // Determine hemisphere from location
+  const hemisphere = location && location.lat >= 0 ? 'Northern' : 'Southern';
+  const optimalDirection = hemisphere === 'Northern' ? 'South (180°)' : 'North (0°)';
+  
   const handleTogglePanel = (panelId) => {
     const panel = panels.find(p => p.id === panelId);
     onPanelUpdate(panelId, { enabled: !panel.enabled });
@@ -13,6 +17,21 @@ function RoofEditor({ roofData, panels, onPanelUpdate, onCalculate, onAddPanel, 
   return (
     <div className="roof-editor">
       <h3>Configure Solar Panels</h3>
+      
+      {location && (
+        <p style={{ 
+          color: '#666', 
+          fontSize: '0.85rem', 
+          marginBottom: '1rem',
+          padding: '0.75rem',
+          background: '#e3f2fd',
+          borderRadius: '4px',
+          borderLeft: '3px solid #2196f3'
+        }}>
+          <strong>📍 {hemisphere} Hemisphere</strong><br />
+          Optimal direction: {optimalDirection}
+        </p>
+      )}
       
       {roofData?.message && (
         <p style={{ 
