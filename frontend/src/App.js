@@ -33,6 +33,7 @@ function App() {
   const [zoom, setZoom] = useState(12);
   const [drawingMode, setDrawingMode] = useState(false);
   const [roofSections, setRoofSections] = useState([]);
+  const [editingRoofIndex, setEditingRoofIndex] = useState(null);
 
   // Load properties and active property on mount
   useEffect(() => {
@@ -270,6 +271,46 @@ function App() {
     console.log(`Created roof section facing ${sectionData.direction} (${sectionData.azimuth}°) with area ${sectionData.area} m²`);
   };
 
+  const handleEditRoofSection = (sectionIndex) => {
+    setEditingRoofIndex(sectionIndex);
+    setDrawingMode(false); // Disable drawing while editing edges
+  };
+
+  const handleEdgeSelectionComplete = (sectionIndex, updatedData) => {
+    // Update the roof section with new data
+    setRoofSections(prevSections =>
+      prevSections.map((section, idx) =>
+        idx === sectionIndex 
+          ? { ...section, ...updatedData }
+          : section
+      )
+    );
+
+    // Update the corresponding panel
+    if (panels[sectionIndex]) {
+      setPanels(prevPanels =>
+        prevPanels.map((panel, idx) =>
+          idx === sectionIndex
+            ? { 
+                ...panel, 
+                azimuth: updatedData.azimuth,
+                pitch: updatedData.pitch
+              }
+            : panel
+        )
+      );
+    }
+
+    // Exit edge selection mode
+    setEditingRoofIndex(null);
+    
+    console.log(`Updated roof section ${sectionIndex} - Direction: ${updatedData.direction} (${updatedData.azimuth}°), Pitch: ${updatedData.pitch}°`);
+  };
+
+  const handleCancelEdgeSelection = () => {
+    setEditingRoofIndex(null);
+  };
+
   const handleRemovePanel = (panelId) => {
     setPanels(panels.filter(p => p.id !== panelId));
   };
@@ -373,10 +414,12 @@ function App() {
             <RoofEditor
               roofData={roofData}
               panels={panels}
+              roofSections={roofSections}
               onPanelUpdate={handlePanelUpdate}
               onAddPanel={handleAddPanel}
               onRemovePanel={handleRemovePanel}
               onCalculate={handleCalculateEnergy}
+              onEditRoofSection={handleEditRoofSection}
               location={location}
             />
           )}
@@ -403,6 +446,9 @@ function App() {
             drawingMode={drawingMode}
             onPolygonComplete={handlePolygonComplete}
             roofSections={roofSections}
+            editingRoofIndex={editingRoofIndex}
+            onEdgeSelectionComplete={handleEdgeSelectionComplete}
+            onCancelEdgeSelection={handleCancelEdgeSelection}
           />
         </div>
       </div>

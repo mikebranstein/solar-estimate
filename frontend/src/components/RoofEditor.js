@@ -1,6 +1,6 @@
 import React from 'react';
 
-function RoofEditor({ roofData, panels, onPanelUpdate, onCalculate, onAddPanel, onRemovePanel, location }) {
+function RoofEditor({ roofData, panels, roofSections = [], onPanelUpdate, onCalculate, onAddPanel, onRemovePanel, onEditRoofSection, location }) {
   // Determine hemisphere from location
   const hemisphere = location && location.lat >= 0 ? 'Northern' : 'Southern';
   const optimalDirection = hemisphere === 'Northern' ? 'South (180°)' : 'North (0°)';
@@ -171,6 +171,23 @@ function RoofEditor({ roofData, panels, onPanelUpdate, onCalculate, onAddPanel, 
                   <small style={{ color: '#666', fontSize: '0.8rem' }}>Optional</small>
                 </div>
               </div>
+
+              {/* Edit Edges button - only show if this panel has a corresponding roof section */}
+              {roofSections[panel.id] && onEditRoofSection && (
+                <button
+                  onClick={() => onEditRoofSection(panel.id)}
+                  style={{
+                    width: '100%',
+                    marginTop: '0.75rem',
+                    background: '#6c757d',
+                    padding: '0.5rem',
+                    fontSize: '0.9rem'
+                  }}
+                  disabled={!panel.enabled}
+                >
+                  ✏️ Edit Roof Edges (Refine Direction)
+                </button>
+              )}
             </div>
           ))
         )}

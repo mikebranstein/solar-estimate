@@ -5,6 +5,7 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
 import 'leaflet-draw';
 import { calculateRoofAzimuth, calculatePolygonArea, getCardinalDirection, calculateCentroid, getHemisphere, getSolarEfficiency } from '../utils/roofCalculations';
+import EdgeSelector from './EdgeSelector';
 
 // Fix for default marker icon issue with Leaflet in React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -220,7 +221,10 @@ function MapView({
   onZoomChange,
   drawingMode = false,
   onPolygonComplete,
-  roofSections = []
+  roofSections = [],
+  editingRoofIndex = null,
+  onEdgeSelectionComplete,
+  onCancelEdgeSelection
 }) {
   const defaultCenter = userLocation 
     ? [userLocation.lat, userLocation.lng] 
@@ -256,6 +260,16 @@ function MapView({
         
         {/* Display existing roof sections */}
         <RoofSections sections={roofSections} location={location} />
+        
+        {/* Edge selector for refining roof direction */}
+        {editingRoofIndex !== null && roofSections[editingRoofIndex] && (
+          <EdgeSelector
+            roofSection={roofSections[editingRoofIndex]}
+            sectionIndex={editingRoofIndex}
+            onEdgeSelectionComplete={onEdgeSelectionComplete}
+            onCancel={onCancelEdgeSelection}
+          />
+        )}
         
         {/* Satellite Imagery Tile Layer */}
         <TileLayer
