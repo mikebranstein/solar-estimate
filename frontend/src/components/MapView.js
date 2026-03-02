@@ -325,8 +325,8 @@ function MapView({
         {/* Track zoom changes */}
         {onZoomChange && <ZoomHandler onZoomChange={onZoomChange} />}
         
-        {/* Click handler for manual location selection */}
-        {onLocationSelect && !drawingMode && <LocationMarker onLocationSelect={onLocationSelect} />}
+        {/* Click handler for manual location selection - disabled during drawing or edge editing */}
+        {onLocationSelect && !drawingMode && editingRoofIndex === null && <LocationMarker onLocationSelect={onLocationSelect} />}
         
         {/* Drawing tools for roof sections */}
         {drawingMode && onPolygonComplete && (
@@ -388,7 +388,11 @@ function MapView({
         maxWidth: '90%',
         textAlign: 'center'
       }}>
-        {drawingMode ? (
+        {editingRoofIndex !== null ? (
+          <span>
+            🎯 Click on edges to select the ridge and eave for precise direction calculation
+          </span>
+        ) : drawingMode ? (
           location ? (
             <span>
               ✏️ Click the polygon tool on the right to draw roof sections. 
